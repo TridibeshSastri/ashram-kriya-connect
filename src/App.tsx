@@ -13,6 +13,8 @@ import About from "./pages/About";
 import Kriyayoga from "./pages/Kriyayoga";
 import Events from "./pages/Events";
 import Contact from "./pages/Contact";
+import SocialService from "./pages/SocialService";
+import Resources from "./pages/Resources";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +33,8 @@ const App = () => (
               <Route path="/about" element={<About />} />
               <Route path="/kriyayoga" element={<Kriyayoga />} />
               <Route path="/events" element={<Events />} />
+              <Route path="/social-service" element={<SocialService />} />
+              <Route path="/resources" element={<Resources />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
