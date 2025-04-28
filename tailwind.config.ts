@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -63,7 +62,6 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Custom ashram colors
 				saffron: '#FF9933',
 				maroon: '#800000',
 				cream: '#FFF8E1',
