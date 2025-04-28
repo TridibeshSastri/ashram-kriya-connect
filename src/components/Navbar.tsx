@@ -43,9 +43,14 @@ const Navbar = () => {
       }`}
     >
       <div className="container-custom flex justify-between items-center">
-        <Link to="/" className="flex items-center">
+        <Link to="/" className="flex items-center gap-3">
+          <img 
+            src="/lovable-uploads/a2ea3c4d-d4cd-4312-a22a-d688c1c49ec2.png"
+            alt="ASKSMS Logo"
+            className="h-12 w-12"
+          />
           <span className="text-xl md:text-2xl font-playfair font-bold text-maroon">
-            Aukhanda Shri
+            ASKSMS
           </span>
         </Link>
 
