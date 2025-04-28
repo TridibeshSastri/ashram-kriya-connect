@@ -20,9 +20,9 @@ const EventCard = ({ title, date, image, location, description, link }: EventCar
           alt={title} 
           className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
         />
-        <div className="absolute top-4 left-4 bg-white shadow-md text-maroon px-3 py-1.5 rounded-md font-medium text-sm">
+        <div className="absolute top-4 left-4 bg-saffron text-white px-3 py-1.5 rounded-md font-medium text-sm">
           <div className="flex items-center gap-1.5">
-            <Calendar size={14} className="text-saffron" />
+            <Calendar size={14} className="text-white" />
             {date}
           </div>
         </div>
