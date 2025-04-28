@@ -14,34 +14,34 @@ interface EventCardProps {
 const EventCard = ({ title, date, image, location, description, link }: EventCardProps) => {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
-      <div className="relative h-48 overflow-hidden">
+      <div className="relative h-48">
         <img 
           src={image} 
           alt={title} 
           className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
         />
-        <div className="absolute top-0 left-0 bg-saffron text-white px-3 py-1 rounded-br-lg font-medium text-sm">
-          <div className="flex items-center">
-            <Calendar size={14} className="mr-1" />
+        <div className="absolute top-4 left-4 bg-white shadow-md text-maroon px-3 py-1.5 rounded-md font-medium text-sm">
+          <div className="flex items-center gap-1.5">
+            <Calendar size={14} className="text-saffron" />
             {date}
           </div>
         </div>
       </div>
       
       <div className="p-5">
-        <h3 className="text-xl font-semibold text-maroon mb-1">{title}</h3>
+        <h3 className="text-xl font-semibold text-maroon mb-2 line-clamp-2">{title}</h3>
         <p className="text-gray-600 text-sm mb-3">{location}</p>
         <p className="text-gray-700 text-sm line-clamp-3 mb-4">{description}</p>
         
         {link && (
           <Link 
             to={link}
-            className="text-saffron hover:text-maroon text-sm font-medium transition-colors flex items-center"
+            className="inline-flex items-center text-saffron hover:text-maroon text-sm font-medium transition-colors gap-1"
           >
             Learn More
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
-              className="h-4 w-4 ml-1" 
+              className="h-4 w-4" 
               viewBox="0 0 20 20" 
               fill="currentColor"
             >
