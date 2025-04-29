@@ -35,7 +35,8 @@ const Index = () => {
       image: "/images/initiation.jpg",
       location: "Main Temple Hall",
       description: "Sacred initiation ceremony for new seekers guided by our Guruji. Learn the powerful techniques of Kriyayoga meditation.",
-      link: "/events/kriyayoga-initiation"
+      link: "/events/kriyayoga-initiation",
+      availableSeats: 35
     },
     {
       title: "Guru Purnima Celebration",
@@ -43,7 +44,8 @@ const Index = () => {
       image: "/images/guru-purnima.jpg",
       location: "Ashram Grounds",
       description: "Annual celebration honoring the Guru lineage with special pujas, bhajans, and spiritual discourses throughout the day.",
-      link: "/events/guru-purnima"
+      link: "/events/guru-purnima",
+      availableSeats: 120
     },
     {
       title: "Monthly Yajna",
@@ -51,7 +53,8 @@ const Index = () => {
       image: "/images/yajna.jpg",
       location: "Yajna Shala",
       description: "Sacred fire ceremony for purification and spiritual upliftment, followed by prasad distribution.",
-      link: "/events/monthly-yajna"
+      link: "/events/monthly-yajna",
+      availableSeats: 50
     }
   ];
   
@@ -151,6 +154,8 @@ const Index = () => {
                 location={event.location}
                 description={event.description}
                 link={event.link}
+                availableSeats={event.availableSeats}
+                allowBooking={true}
               />
             ))}
           </div>

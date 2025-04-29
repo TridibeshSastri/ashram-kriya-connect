@@ -1,6 +1,9 @@
 
-import { Calendar } from 'lucide-react';
+import { useState } from 'react';
+import { Calendar, Ticket } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import BookingDialog from './BookingDialog';
 
 interface EventCardProps {
   title: string;
@@ -9,9 +12,22 @@ interface EventCardProps {
   location: string;
   description: string;
   link?: string;
+  availableSeats?: number;
+  allowBooking?: boolean;
 }
 
-const EventCard = ({ title, date, image, location, description, link }: EventCardProps) => {
+const EventCard = ({ 
+  title, 
+  date, 
+  image, 
+  location, 
+  description, 
+  link,
+  availableSeats = 50,
+  allowBooking = true
+}: EventCardProps) => {
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
       <div className="relative h-48">
@@ -33,27 +49,44 @@ const EventCard = ({ title, date, image, location, description, link }: EventCar
         <p className="text-gray-600 text-sm mb-3">{location}</p>
         <p className="text-gray-700 text-sm line-clamp-3 mb-4">{description}</p>
         
-        {link && (
-          <Link 
-            to={link}
-            className="inline-flex items-center text-saffron hover:text-maroon text-sm font-medium transition-colors gap-1"
-          >
-            Learn More
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className="h-4 w-4" 
-              viewBox="0 0 20 20" 
-              fill="currentColor"
-            >
-              <path 
-                fillRule="evenodd" 
-                d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" 
-                clipRule="evenodd" 
-              />
-            </svg>
-          </Link>
-        )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Ticket size={16} className="text-saffron" />
+            <span className="text-sm text-gray-700">{availableSeats} seats available</span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {link && (
+              <Link 
+                to={link}
+                className="inline-flex items-center text-saffron hover:text-maroon text-sm font-medium transition-colors gap-1"
+              >
+                Details
+              </Link>
+            )}
+            
+            {allowBooking && (
+              <Button 
+                variant="outline" 
+                className="border-saffron text-saffron hover:bg-saffron hover:text-white"
+                onClick={() => setIsBookingOpen(true)}
+              >
+                Book Seats
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
+      
+      {allowBooking && (
+        <BookingDialog
+          open={isBookingOpen}
+          onOpenChange={setIsBookingOpen}
+          eventTitle={title}
+          eventDate={date}
+          availableSeats={availableSeats}
+        />
+      )}
     </div>
   );
 };

@@ -16,7 +16,8 @@ const Events = () => {
       location: "Main Temple Hall",
       category: "Initiations",
       description: "Sacred initiation ceremony for new seekers guided by our Guruji. Learn the powerful techniques of Kriyayoga meditation.",
-      link: "/events/kriyayoga-initiation"
+      link: "/events/kriyayoga-initiation",
+      availableSeats: 35
     },
     {
       title: "Guru Pūrṇimā Celebration",
@@ -25,7 +26,8 @@ const Events = () => {
       location: "Ashram Grounds",
       category: "Festivals",
       description: "Annual celebration honoring the Guru lineage with special pujas, bhajans, and spiritual discourses throughout the day.",
-      link: "/events/guru-purnima"
+      link: "/events/guru-purnima",
+      availableSeats: 120
     },
     {
       title: "Monthly Yajna",
@@ -35,7 +37,8 @@ const Events = () => {
       category: "Yajnas",
       category2: "Monthly",
       description: "Sacred fire ceremony for purification and spiritual upliftment, followed by prasad distribution.",
-      link: "/events/monthly-yajna"
+      link: "/events/monthly-yajna",
+      availableSeats: 50
     },
     {
       title: "Janmāṣṭamī Celebration",
@@ -44,7 +47,8 @@ const Events = () => {
       location: "Krishna Temple",
       category: "Festivals",
       description: "Celebrate the divine birth of Lord Krishna with all-night bhajans, readings from the Bhagavad Gita, and special prasad.",
-      link: "/events/janmashtami"
+      link: "/events/janmashtami",
+      availableSeats: 80
     },
     {
       title: "Advanced Kriyayoga Retreat",
@@ -53,7 +57,8 @@ const Events = () => {
       location: "Meditation Hall & Grounds",
       category: "Initiations",
       description: "A week-long intensive retreat for initiated Kriyayoga practitioners to deepen their practice under Guruji's guidance.",
-      link: "/events/advanced-retreat"
+      link: "/events/advanced-retreat",
+      availableSeats: 25
     },
     {
       title: "Monthly Kumbhabhiṣeka",
@@ -63,7 +68,8 @@ const Events = () => {
       category: "Kumbhabhiṣeka",
       category2: "Monthly",
       description: "Sacred ritual of bathing the temple deities with sanctified water, milk, honey, and other auspicious substances.",
-      link: "/events/kumbhabhisheka-may"
+      link: "/events/kumbhabhisheka-may",
+      availableSeats: 40
     },
     {
       title: "Kali Pūjā",
@@ -72,7 +78,8 @@ const Events = () => {
       location: "Kali Temple",
       category: "Festivals",
       description: "Special night-long worship of Divine Mother Kali, representing the cosmic power of transformation.",
-      link: "/events/kali-puja"
+      link: "/events/kali-puja",
+      availableSeats: 60
     },
     {
       title: "Monthly Spiritual Discourse",
@@ -81,7 +88,8 @@ const Events = () => {
       location: "Lecture Hall",
       category: "Monthly",
       description: "Guruji shares wisdom from sacred texts and answers spiritual questions from devotees and seekers.",
-      link: "/events/may-discourse"
+      link: "/events/may-discourse",
+      availableSeats: 75
     },
     {
       title: "Annual Yajna for World Peace",
@@ -90,7 +98,8 @@ const Events = () => {
       location: "Main Yajna Shala",
       category: "Yajnas",
       description: "A grand ceremonial fire ritual performed for universal harmony and peace, with participation from all devotees.",
-      link: "/events/world-peace-yajna"
+      link: "/events/world-peace-yajna",
+      availableSeats: 100
     }
   ];
   
@@ -147,6 +156,8 @@ const Events = () => {
                   location={event.location}
                   description={event.description}
                   link={event.link}
+                  availableSeats={event.availableSeats}
+                  allowBooking={true}
                 />
               ))
             ) : (
