@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { PencilIcon, TrashIcon, PlusIcon, FileTextIcon } from 'lucide-react';
+import { PencilIcon, TrashIcon, PlusIcon, FileTextIcon, CheckIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
