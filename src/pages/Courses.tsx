@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
@@ -28,6 +27,17 @@ export interface Lesson {
   type: 'video' | 'text' | 'image';
   content: string;
   duration?: string;
+  description?: string;
+  attachments?: {
+    type: 'pdf' | 'audio' | 'document';
+    title: string;
+    url: string;
+  }[];
+  quizQuestions?: {
+    question: string;
+    options: string[];
+    correctAnswer: number;
+  }[];
 }
 
 export const mockCourses: Course[] = [

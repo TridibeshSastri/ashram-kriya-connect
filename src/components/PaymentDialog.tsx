@@ -66,9 +66,11 @@ const PaymentDialog = ({
     setIsSubmitting(true);
     
     try {
-      // Create payment details
+      // Create payment details - Fix: Explicitly assign all required fields
       const paymentDetails: PaymentDetails = {
-        ...values,
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
         purpose,
         amount,
       };
