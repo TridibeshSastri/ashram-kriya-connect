@@ -1,13 +1,26 @@
 
+import { useState } from 'react';
 import { HandHeart, DollarSign, Users, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import PaymentDialog from '@/components/PaymentDialog';
 
-const DonateOption = ({ title, description, amount, icon: Icon }: {
+interface DonationOption {
   title: string;
   description: string;
   amount: string;
+  amountValue: number;
   icon: React.ElementType;
+}
+
+const DonateOption = ({ 
+  title, 
+  description, 
+  amount, 
+  icon: Icon,
+  onDonate 
+}: DonationOption & { 
+  onDonate: () => void 
 }) => (
   <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow">
     <div className="flex items-center gap-4 mb-4">
@@ -19,7 +32,11 @@ const DonateOption = ({ title, description, amount, icon: Icon }: {
     <p className="text-gray-600 mb-4">{description}</p>
     <div className="flex items-center justify-between">
       <span className="text-lg font-semibold text-maroon">{amount}</span>
-      <Button variant="outline" className="border-saffron text-saffron hover:bg-saffron hover:text-white">
+      <Button 
+        variant="outline" 
+        className="border-saffron text-saffron hover:bg-saffron hover:text-white"
+        onClick={onDonate}
+      >
         Donate Now
       </Button>
     </div>
@@ -27,26 +44,37 @@ const DonateOption = ({ title, description, amount, icon: Icon }: {
 );
 
 const Donate = () => {
-  const donationOptions = [
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [selectedDonation, setSelectedDonation] = useState<DonationOption | null>(null);
+
+  const donationOptions: DonationOption[] = [
     {
       title: "Temple Maintenance",
       description: "Support the upkeep and preservation of our sacred temple spaces and meditation halls.",
       amount: "₹1,100",
+      amountValue: 1100,
       icon: HandHeart
     },
     {
       title: "Anna Dānam Service",
       description: "Help us provide daily meals to devotees, visitors, and those in need through our food service program.",
       amount: "₹5,100",
+      amountValue: 5100,
       icon: Users
     },
     {
       title: "Spiritual Education",
       description: "Fund our spiritual education programs, workshops, and the publication of sacred texts.",
       amount: "₹2,100",
+      amountValue: 2100,
       icon: BookOpen
     }
   ];
+
+  const handleDonate = (donation: DonationOption) => {
+    setSelectedDonation(donation);
+    setIsPaymentOpen(true);
+  };
 
   return (
     <div className="py-16 bg-gray-50">
@@ -67,7 +95,11 @@ const Donate = () => {
         {/* Donation Options */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
           {donationOptions.map((option, index) => (
-            <DonateOption key={index} {...option} />
+            <DonateOption 
+              key={index} 
+              {...option} 
+              onDonate={() => handleDonate(option)} 
+            />
           ))}
         </div>
 
@@ -85,6 +117,16 @@ const Donate = () => {
             Contact Us
           </Link>
         </div>
+
+        {/* Payment Dialog */}
+        {selectedDonation && (
+          <PaymentDialog
+            open={isPaymentOpen}
+            onOpenChange={setIsPaymentOpen}
+            purpose={selectedDonation.title}
+            amount={selectedDonation.amountValue}
+          />
+        )}
       </div>
     </div>
   );
