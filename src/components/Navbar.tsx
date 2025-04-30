@@ -29,7 +29,8 @@ const Navbar = () => {
     { name: 'Events', path: '/events' },
     { name: 'Social Service', path: '/social-service' },
     { name: 'Resources', path: '/resources' },
-    { name: 'Contact', path: '/contact' }
+    { name: 'Contact', path: '/contact' },
+    { name: 'Admin', path: '/admin' }
   ];
 
   const isActive = (path: string) => {
