@@ -16,6 +16,8 @@ import Events from "./pages/Events";
 import Contact from "./pages/Contact";
 import SocialService from "./pages/SocialService";
 import Resources from "./pages/Resources";
+import Courses from "./pages/Courses";
+import CourseDetail from "./pages/CourseDetail";
 import NotFound from "./pages/NotFound";
 import Donate from "./pages/Donate";
 import Admin from "./pages/Admin";
@@ -41,6 +43,8 @@ const App = () => (
               <Route path="/events" element={<Events />} />
               <Route path="/social-service" element={<SocialService />} />
               <Route path="/resources" element={<Resources />} />
+              <Route path="/resources/courses" element={<Courses />} />
+              <Route path="/resources/courses/:courseId" element={<CourseDetail />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/donate" element={<Donate />} />
               <Route path="/admin-auth" element={<AdminAuth />} />

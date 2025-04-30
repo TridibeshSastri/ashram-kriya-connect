@@ -3,14 +3,15 @@ import {
   FileText,
   FileImage,
   FileAudio,
-  FileVideo
+  FileVideo,
+  BookOpen
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface ResourceCardProps {
   title: string;
   description: string;
-  type: 'article' | 'video' | 'audio' | 'image';
+  type: 'article' | 'video' | 'audio' | 'image' | 'course';
   link: string;
 }
 
@@ -25,6 +26,8 @@ const ResourceCard = ({ title, description, type, link }: ResourceCardProps) => 
         return <FileAudio className="w-6 h-6 text-saffron" />;
       case 'image':
         return <FileImage className="w-6 h-6 text-saffron" />;
+      case 'course':
+        return <BookOpen className="w-6 h-6 text-saffron" />;
     }
   };
 
@@ -72,6 +75,12 @@ const Resources = () => {
       description: "Video recordings of Guruji's discourses on various spiritual topics.",
       type: "video" as const,
       link: "/resources/discourses"
+    },
+    {
+      title: "Spiritual Courses",
+      description: "In-depth courses on various aspects of spirituality, meditation, and yoga practices.",
+      type: "course" as const,
+      link: "/resources/courses"
     },
     {
       title: "Yoga & Pranayama Guide",
