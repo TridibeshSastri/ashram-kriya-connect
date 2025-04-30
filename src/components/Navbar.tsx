@@ -6,6 +6,7 @@ import { Menu, X } from 'lucide-react';
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
   
   useEffect(() => {
@@ -22,6 +23,29 @@ const Navbar = () => {
     setIsOpen(false);
   }, [location]);
 
+  // Check if devotee is logged in
+  useEffect(() => {
+    const checkLoginStatus = () => {
+      const devoteeUser = localStorage.getItem('devoteeUser');
+      if (devoteeUser) {
+        try {
+          const user = JSON.parse(devoteeUser);
+          setIsLoggedIn(!!user.isAuthenticated);
+        } catch (e) {
+          setIsLoggedIn(false);
+        }
+      } else {
+        setIsLoggedIn(false);
+      }
+    };
+
+    checkLoginStatus();
+    
+    // Listen for storage changes (in case of login/logout)
+    window.addEventListener('storage', checkLoginStatus);
+    return () => window.removeEventListener('storage', checkLoginStatus);
+  }, [location.pathname]);
+
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'About Us', path: '/about' },
@@ -36,6 +60,10 @@ const Navbar = () => {
   const isActive = (path: string) => {
     return location.pathname === path;
   };
+
+  const devoteeLink = isLoggedIn 
+    ? { name: 'My Dashboard', path: '/devotee-dashboard' }
+    : { name: 'Devotee Login', path: '/devotee-auth' };
 
   return (
     <nav 
@@ -70,6 +98,16 @@ const Navbar = () => {
               {link.name}
             </Link>
           ))}
+          <Link
+            to={devoteeLink.path}
+            className={`px-3 py-2 rounded-md text-sm lg:text-base transition-colors ${
+              isActive(devoteeLink.path)
+                ? 'text-saffron font-medium'
+                : 'text-foreground hover:text-saffron'
+            }`}
+          >
+            {devoteeLink.name}
+          </Link>
           <Link 
             to="/donate"
             className="ml-1 bg-saffron hover:bg-saffron/90 text-white px-4 py-2 rounded-md text-sm lg:text-base transition-colors"
@@ -104,6 +142,16 @@ const Navbar = () => {
                 {link.name}
               </Link>
             ))}
+            <Link
+              to={devoteeLink.path}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                isActive(devoteeLink.path)
+                  ? 'bg-accent text-saffron font-medium'
+                  : 'text-foreground hover:bg-accent/50'
+              }`}
+            >
+              {devoteeLink.name}
+            </Link>
             <Link 
               to="/donate"
               className="bg-saffron hover:bg-saffron/90 text-white px-4 py-2 rounded-md text-center transition-colors"

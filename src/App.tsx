@@ -18,6 +18,8 @@ import Resources from "./pages/Resources";
 import NotFound from "./pages/NotFound";
 import Donate from "./pages/Donate";
 import Admin from "./pages/Admin";
+import DevoteeAuth from "./pages/DevoteeAuth";
+import DevoteeDashboard from "./pages/DevoteeDashboard";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +42,8 @@ const App = () => (
               <Route path="/contact" element={<Contact />} />
               <Route path="/donate" element={<Donate />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/devotee-auth" element={<DevoteeAuth />} />
+              <Route path="/devotee-dashboard" element={<DevoteeDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
