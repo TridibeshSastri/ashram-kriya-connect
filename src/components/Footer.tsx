@@ -1,9 +1,11 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Mail, MapPin, Phone } from 'lucide-react';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
   
   return (
     <footer className="bg-cream pt-12 pb-6 border-t border-saffron/20">
@@ -49,6 +51,9 @@ const Footer = () => {
               <li><Link to="/social-service" className="text-gray-700 hover:text-saffron transition-colors">Social Service</Link></li>
               <li><Link to="/resources" className="text-gray-700 hover:text-saffron transition-colors">Resources</Link></li>
               <li><Link to="/donate" className="text-gray-700 hover:text-saffron transition-colors">Donate</Link></li>
+              {isHomePage && (
+                <li><Link to="/admin-auth" className="text-gray-700 hover:text-saffron transition-colors">Admin Login</Link></li>
+              )}
             </ul>
           </div>
           

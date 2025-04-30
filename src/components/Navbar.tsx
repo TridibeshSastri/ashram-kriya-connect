@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
@@ -73,9 +74,6 @@ const Navbar = () => {
   // Only add admin link if user is admin
   if (isAdmin) {
     navLinks.push({ name: 'Admin', path: '/admin' });
-  } else {
-    // For non-admins, show the admin login link
-    navLinks.push({ name: 'Admin Login', path: '/admin-auth' });
   }
 
   const isActive = (path: string) => {
