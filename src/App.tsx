@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 
 import Index from "./pages/Index";
 import About from "./pages/About";
@@ -18,6 +19,7 @@ import Resources from "./pages/Resources";
 import NotFound from "./pages/NotFound";
 import Donate from "./pages/Donate";
 import Admin from "./pages/Admin";
+import AdminAuth from "./pages/AdminAuth";
 import DevoteeAuth from "./pages/DevoteeAuth";
 import DevoteeDashboard from "./pages/DevoteeDashboard";
 
@@ -41,7 +43,12 @@ const App = () => (
               <Route path="/resources" element={<Resources />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/donate" element={<Donate />} />
-              <Route path="/admin" element={<Admin />} />
+              <Route path="/admin-auth" element={<AdminAuth />} />
+              <Route path="/admin" element={
+                <ProtectedAdminRoute>
+                  <Admin />
+                </ProtectedAdminRoute>
+              } />
               <Route path="/devotee-auth" element={<DevoteeAuth />} />
               <Route path="/devotee-dashboard" element={<DevoteeDashboard />} />
               <Route path="*" element={<NotFound />} />

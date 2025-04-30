@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
@@ -7,6 +6,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
   
   useEffect(() => {
@@ -26,6 +26,7 @@ const Navbar = () => {
   // Check if devotee is logged in
   useEffect(() => {
     const checkLoginStatus = () => {
+      // Check devotee login status
       const devoteeUser = localStorage.getItem('devoteeUser');
       if (devoteeUser) {
         try {
@@ -36,6 +37,19 @@ const Navbar = () => {
         }
       } else {
         setIsLoggedIn(false);
+      }
+      
+      // Check admin login status
+      const adminUser = localStorage.getItem('adminUser');
+      if (adminUser) {
+        try {
+          const admin = JSON.parse(adminUser);
+          setIsAdmin(!!admin.isAdmin);
+        } catch (e) {
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
       }
     };
 
@@ -54,8 +68,15 @@ const Navbar = () => {
     { name: 'Social Service', path: '/social-service' },
     { name: 'Resources', path: '/resources' },
     { name: 'Contact', path: '/contact' },
-    { name: 'Admin', path: '/admin' }
   ];
+
+  // Only add admin link if user is admin
+  if (isAdmin) {
+    navLinks.push({ name: 'Admin', path: '/admin' });
+  } else {
+    // For non-admins, show the admin login link
+    navLinks.push({ name: 'Admin Login', path: '/admin-auth' });
+  }
 
   const isActive = (path: string) => {
     return location.pathname === path;
