@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
@@ -22,10 +23,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
+} from "@/components/ui/form";
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { Course, CourseModule, Lesson } from './Courses';
 import { 
   PlusIcon, TrashIcon, FileTextIcon, ImageIcon, FileVideoIcon, 
@@ -336,7 +337,7 @@ const CourseCreation = () => {
                       <p className="text-gray-600 mb-6">Fill in the basic details about your course.</p>
 
                       <Form {...form}>
-                        <form className="space-y-6">
+                        <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
                           <FormField
                             control={form.control}
                             name="title"
@@ -924,4 +925,172 @@ const CourseCreation = () => {
                                   {newLesson.attachments && newLesson.attachments.length > 0 ? (
                                     <div className="border rounded-md divide-y">
                                       {newLesson.attachments.map((attachment, index) => (
-                                        <div
+                                        <div key={index} className="flex justify-between items-center p-3">
+                                          <div className="flex items-center space-x-3">
+                                            {attachment.type === 'pdf' && <FileTextIcon className="h-5 w-5 text-red-500" />}
+                                            {attachment.type === 'audio' && <FileTextIcon className="h-5 w-5 text-blue-500" />}
+                                            {attachment.type === 'document' && <FileTextIcon className="h-5 w-5 text-green-500" />}
+                                            <div>
+                                              <p className="font-medium">{attachment.title}</p>
+                                              <p className="text-xs text-gray-500">{attachment.url}</p>
+                                            </div>
+                                          </div>
+                                          <Button 
+                                            variant="ghost" 
+                                            size="sm"
+                                            onClick={() => removeAttachment(index)}
+                                            className="text-red-500 hover:text-red-700"
+                                          >
+                                            <TrashIcon className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="text-center p-4 border border-dashed rounded-md">
+                                      <p className="text-gray-500">No attachments added yet</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </TabsContent>
+
+                              {/* Quiz Questions */}
+                              <TabsContent value="quiz" className="space-y-4 pt-4">
+                                <div className="mb-6">
+                                  <h3 className="text-sm font-medium mb-4">Add Quiz Questions</h3>
+                                  
+                                  <div className="space-y-4 mb-6 p-4 bg-white border rounded-md">
+                                    <div className="grid gap-2">
+                                      <Label htmlFor="quizQuestion">Question</Label>
+                                      <Input
+                                        id="quizQuestion"
+                                        placeholder="e.g., What is the correct technique for Kriya breathing?"
+                                        value={newQuizQuestion.question}
+                                        onChange={(e) => setNewQuizQuestion({...newQuizQuestion, question: e.target.value})}
+                                      />
+                                    </div>
+                                    
+                                    <div className="grid gap-4">
+                                      <Label>Options</Label>
+                                      {newQuizQuestion.options.map((option, index) => (
+                                        <div key={index} className="flex items-center gap-2">
+                                          <div className="flex-grow">
+                                            <Input
+                                              placeholder={`Option ${index + 1}`}
+                                              value={option}
+                                              onChange={(e) => {
+                                                const updatedOptions = [...newQuizQuestion.options];
+                                                updatedOptions[index] = e.target.value;
+                                                setNewQuizQuestion({...newQuizQuestion, options: updatedOptions});
+                                              }}
+                                            />
+                                          </div>
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon"
+                                            className={newQuizQuestion.correctAnswer === index ? "border-green-500 bg-green-50" : ""}
+                                            onClick={() => setNewQuizQuestion({...newQuizQuestion, correctAnswer: index})}
+                                          >
+                                            {newQuizQuestion.correctAnswer === index && <CheckIcon className="h-4 w-4 text-green-500" />}
+                                          </Button>
+                                        </div>
+                                      ))}
+                                      <p className="text-xs text-gray-500">Click the button on the right to mark the correct answer</p>
+                                    </div>
+                                    
+                                    <Button 
+                                      type="button" 
+                                      onClick={handleAddQuizQuestion}
+                                      className="mt-2"
+                                    >
+                                      <PlusIcon className="mr-2 h-4 w-4" /> Add Question
+                                    </Button>
+                                  </div>
+                                  
+                                  {/* Questions List */}
+                                  {newLesson.quizQuestions && newLesson.quizQuestions.length > 0 ? (
+                                    <div className="space-y-4 mt-6">
+                                      <h4 className="font-medium">Added Questions:</h4>
+                                      <Accordion type="multiple" className="border rounded-md divide-y">
+                                        {newLesson.quizQuestions.map((question, qIndex) => (
+                                          <AccordionItem key={qIndex} value={`q-${qIndex}`}>
+                                            <div className="flex items-center justify-between pr-4">
+                                              <AccordionTrigger className="py-3 px-4">
+                                                {question.question}
+                                              </AccordionTrigger>
+                                              <Button 
+                                                variant="ghost" 
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  removeQuizQuestion(qIndex);
+                                                }}
+                                                className="text-red-500 hover:text-red-700"
+                                              >
+                                                <TrashIcon className="h-4 w-4" />
+                                              </Button>
+                                            </div>
+                                            <AccordionContent className="px-4 pb-4">
+                                              <ul className="space-y-2">
+                                                {question.options.map((option, oIndex) => (
+                                                  <li key={oIndex} className={`p-2 rounded ${question.correctAnswer === oIndex ? 'bg-green-50 border border-green-200' : 'bg-gray-50'}`}>
+                                                    {oIndex + 1}. {option} {question.correctAnswer === oIndex && <span className="text-green-500 text-sm">(Correct)</span>}
+                                                  </li>
+                                                ))}
+                                              </ul>
+                                            </AccordionContent>
+                                          </AccordionItem>
+                                        ))}
+                                      </Accordion>
+                                    </div>
+                                  ) : (
+                                    <div className="text-center p-4 border border-dashed rounded-md">
+                                      <p className="text-gray-500">No quiz questions added yet</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </TabsContent>
+                            </Tabs>
+                          </div>
+
+                          <div className="flex justify-between pt-6">
+                            <Button 
+                              variant="outline" 
+                              onClick={() => setActiveTab("modules")}
+                            >
+                              Back to Modules
+                            </Button>
+                            <div className="space-x-2">
+                              <Button 
+                                variant="outline" 
+                                type="button" 
+                                onClick={handleAddLesson} 
+                                disabled={!newLesson.title || !newLesson.content}
+                              >
+                                <PlusIcon className="h-4 w-4 mr-2" />
+                                Add Lesson
+                              </Button>
+                              <Button 
+                                onClick={form.handleSubmit(onSubmit)}
+                                className="bg-saffron hover:bg-saffron/90"
+                              >
+                                Save Course
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    </main>
+  );
+};
+
+export default CourseCreation;
