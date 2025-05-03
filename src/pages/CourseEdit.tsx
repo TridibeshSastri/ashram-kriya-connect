@@ -1,11 +1,11 @@
 
-import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Course } from './Courses';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { PageHeader } from "@/components/PageHeader";
+import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -41,21 +41,26 @@ const formSchema = z.object({
   level: z.enum(["Beginner", "Intermediate", "Advanced"]),
 });
 
+// Define a module structure that aligns with both our form and the Course type
+interface ModuleContent {
+  text?: string;
+  videoUrl?: string;
+  imageUrl?: string;
+  pdfUrl?: string;
+}
+
+interface CourseModuleInternal {
+  id: string;
+  title: string;
+  description: string;
+  content: ModuleContent;
+}
+
 const CourseEdit = () => {
   const navigate = useNavigate();
   const { courseId } = useParams<{ courseId: string }>();
   const [course, setCourse] = useState<Course | null>(null);
-  const [modules, setModules] = useState<Array<{
-    id: string;
-    title: string;
-    description: string;
-    content: {
-      text?: string;
-      videoUrl?: string;
-      imageUrl?: string;
-      pdfUrl?: string;
-    };
-  }>>([]);
+  const [modules, setModules] = useState<CourseModuleInternal[]>([]);
   const [loading, setLoading] = useState(true);
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -83,7 +88,21 @@ const CourseEdit = () => {
         
         if (foundCourse) {
           setCourse(foundCourse);
-          setModules(foundCourse.modules || []);
+          
+          // Convert course modules to our internal format
+          const internalModules = foundCourse.modules?.map(module => ({
+            id: module.id,
+            title: module.title,
+            description: module.description || '', // Default to empty string if missing
+            content: {
+              text: module.content?.text || '',
+              videoUrl: module.content?.videoUrl || '',
+              imageUrl: module.content?.imageUrl || '',
+              pdfUrl: module.content?.pdfUrl || '',
+            }
+          })) || [];
+          
+          setModules(internalModules);
           
           // Set form values
           form.reset({
@@ -243,6 +262,15 @@ const CourseEdit = () => {
       const storedCourses = localStorage.getItem('courses');
       const courses: Course[] = storedCourses ? JSON.parse(storedCourses) : [];
       
+      // Convert our internal modules format to Course modules format
+      const courseModules = modules.map(module => ({
+        id: module.id,
+        title: module.title,
+        description: module.description,
+        content: module.content,
+        lessons: [] // Add empty lessons array to satisfy CourseModule type
+      }));
+      
       // Update the course
       const updatedCourse: Course = {
         id: courseId!,
@@ -250,10 +278,9 @@ const CourseEdit = () => {
         description: values.description,
         instructor: values.instructor,
         level: values.level,
-        modules: modules,
-        image: course?.image || "/placeholder.svg", // Keep existing image or use placeholder
-        createdAt: course?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        modules: courseModules,
+        thumbnail: course?.thumbnail || "/placeholder.svg", // Keep existing image or use placeholder
+        duration: course?.duration || "0 hours",
       };
       
       // Replace the course in the array
