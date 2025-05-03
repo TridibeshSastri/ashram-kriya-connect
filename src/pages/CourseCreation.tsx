@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
@@ -27,18 +26,19 @@ import {
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { mockCourses, Course, CourseModule, Lesson } from './Courses';
+import { Course, CourseModule, Lesson } from './Courses';
 import { 
   PlusIcon, TrashIcon, FileTextIcon, ImageIcon, FileVideoIcon, 
   BookOpenIcon, ArrowLeftIcon, CheckIcon, FilePlusIcon, FileIcon
 } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import ResourceUploader from '../components/admin/ResourceUploader';
 
 // Enhanced lesson type with additional fields
 interface EnhancedLesson extends Lesson {
@@ -94,6 +94,8 @@ const CourseCreation = () => {
     options: ['', '', '', ''],
     correctAnswer: 0,
   });
+  const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [uploadContentType, setUploadContentType] = useState<'video' | 'image' | 'pdf' | 'text'>('text');
 
   // Initialize form
   const form = useForm<CourseFormValues>({
@@ -107,6 +109,26 @@ const CourseCreation = () => {
       thumbnail: '',
     },
   });
+
+  // Function to handle file uploads
+  const handleFileUploaded = (fileUrl: string, fileName: string, fileType: string) => {
+    // For thumbnail upload
+    if (activeTab === "basics" && uploadContentType === "image") {
+      setThumbnailUrl(fileUrl);
+      form.setValue("thumbnail", fileUrl);
+      toast.success("Thumbnail uploaded successfully");
+      return;
+    }
+
+    // For lesson content upload
+    if (activeTab === "content") {
+      setNewLesson({
+        ...newLesson,
+        content: fileUrl,
+      });
+      toast.success(`${fileType.charAt(0).toUpperCase() + fileType.slice(1)} content uploaded successfully`);
+    }
+  };
 
   const handleAddModule = () => {
     if (!newModule.title) {
@@ -258,20 +280,23 @@ const CourseCreation = () => {
     }
 
     // Create a new course with the form data and modules
-    const id = data.title.toLowerCase().replace(/\s+/g, '-');
+    const id = `course-${Date.now()}`;
     const course: Course = {
       id,
       title: data.title,
       description: data.description,
-      thumbnail: data.thumbnail || '/lovable-uploads/a2ea3c4d-d4cd-4312-a22a-d688c1c49ec2.png',
+      thumbnail: data.thumbnail || thumbnailUrl || '/lovable-uploads/a2ea3c4d-d4cd-4312-a22a-d688c1c49ec2.png',
       instructor: data.instructor || '',
       duration: data.duration || '',
       level: data.level,
       modules: modules,
     };
 
+    // Store the course in localStorage to ensure it's available for the course manager
+    const existingCourses = JSON.parse(localStorage.getItem('courses') || '[]');
+    localStorage.setItem('courses', JSON.stringify([...existingCourses, course]));
+
     // In a real application, this would save to the backend
-    // For now, we'll just show a success message and redirect back to the admin page
     toast.success("Course created successfully");
     navigate('/admin');
   };
@@ -401,22 +426,54 @@ const CourseCreation = () => {
                               )}
                             />
 
-                            <FormField
-                              control={form.control}
-                              name="thumbnail"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Thumbnail URL</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Image URL" {...field} />
-                                  </FormControl>
-                                  <FormDescription>
-                                    Provide a URL to an image that represents your course
-                                  </FormDescription>
-                                  <FormMessage />
-                                </FormItem>
+                            <div>
+                              <FormField
+                                control={form.control}
+                                name="thumbnail"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Thumbnail URL</FormLabel>
+                                    <FormControl>
+                                      <div className="flex gap-2">
+                                        <Input 
+                                          placeholder="Image URL" 
+                                          {...field} 
+                                          value={thumbnailUrl || field.value}
+                                          onChange={(e) => {
+                                            field.onChange(e);
+                                            setThumbnailUrl('');
+                                          }}
+                                        />
+                                      </div>
+                                    </FormControl>
+                                    <FormDescription>
+                                      Provide a URL to an image or upload one below
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <div className="mt-2">
+                                <Label>Upload Thumbnail</Label>
+                                <div className="mt-1">
+                                  <ResourceUploader
+                                    onFileUploaded={handleFileUploaded}
+                                    acceptedTypes="image/*"
+                                    fileType="image"
+                                  />
+                                </div>
+                              </div>
+
+                              {thumbnailUrl && (
+                                <div className="mt-4 border rounded-md overflow-hidden max-w-xs">
+                                  <img
+                                    src={thumbnailUrl}
+                                    alt="Thumbnail preview"
+                                    className="w-full h-auto"
+                                  />
+                                </div>
                               )}
-                            />
+                            </div>
                           </div>
 
                           <div className="pt-4">
@@ -608,6 +665,7 @@ const CourseCreation = () => {
                               <TabsList>
                                 <TabsTrigger value="basic">Basic Info</TabsTrigger>
                                 <TabsTrigger value="content">Content</TabsTrigger>
+                                <TabsTrigger value="upload">Upload Content</TabsTrigger>
                                 <TabsTrigger value="attachments">Attachments</TabsTrigger>
                                 <TabsTrigger value="quiz">Quiz Questions</TabsTrigger>
                               </TabsList>
@@ -724,6 +782,87 @@ const CourseCreation = () => {
                                 </div>
                               </TabsContent>
 
+                              {/* Upload Content Tab */}
+                              <TabsContent value="upload" className="space-y-4 pt-4">
+                                <div className="mb-6">
+                                  <Label>Content Type</Label>
+                                  <Select
+                                    value={uploadContentType}
+                                    onValueChange={(value) => {
+                                      setUploadContentType(value as 'video' | 'image' | 'pdf' | 'text');
+                                      setNewLesson({
+                                        ...newLesson,
+                                        type: value as 'video' | 'image' | 'text',
+                                      });
+                                    }}
+                                  >
+                                    <SelectTrigger className="w-full md:w-1/3 mb-4">
+                                      <SelectValue placeholder="Select content type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="video">Video</SelectItem>
+                                      <SelectItem value="image">Image</SelectItem>
+                                      <SelectItem value="pdf">PDF</SelectItem>
+                                      <SelectItem value="text">Text Document</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  
+                                  <div className="my-4">
+                                    <ResourceUploader
+                                      onFileUploaded={handleFileUploaded}
+                                      acceptedTypes={
+                                        uploadContentType === 'video' 
+                                          ? 'video/*' 
+                                          : uploadContentType === 'image' 
+                                            ? 'image/*' 
+                                            : uploadContentType === 'pdf' 
+                                              ? 'application/pdf' 
+                                              : 'text/*,.doc,.docx'
+                                      }
+                                      fileType={uploadContentType}
+                                    />
+                                  </div>
+                                  
+                                  {newLesson.content && (
+                                    <div className="mt-6 p-4 bg-white border rounded-md">
+                                      <h3 className="text-lg font-medium mb-2">Content Preview</h3>
+                                      {uploadContentType === 'image' && (
+                                        <div className="border rounded-md overflow-hidden">
+                                          <img 
+                                            src={newLesson.content} 
+                                            alt="Content preview" 
+                                            className="max-w-full h-auto"
+                                          />
+                                        </div>
+                                      )}
+                                      {uploadContentType === 'video' && (
+                                        <div className="border rounded-md overflow-hidden">
+                                          <video 
+                                            src={newLesson.content}
+                                            controls
+                                            className="max-w-full h-auto"
+                                          >
+                                            Your browser does not support the video tag.
+                                          </video>
+                                        </div>
+                                      )}
+                                      {(uploadContentType === 'pdf' || uploadContentType === 'text') && (
+                                        <div className="flex items-center space-x-2">
+                                          {uploadContentType === 'pdf' 
+                                            ? <FileTextIcon className="h-6 w-6 text-red-500" />
+                                            : <FileTextIcon className="h-6 w-6 text-green-500" />
+                                          }
+                                          <div>
+                                            <p className="font-medium">Content uploaded successfully</p>
+                                            <p className="text-sm text-gray-500">{newLesson.content}</p>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </TabsContent>
+
                               {/* Attachments */}
                               <TabsContent value="attachments" className="space-y-4 pt-4">
                                 <div className="mb-6">
@@ -785,187 +924,4 @@ const CourseCreation = () => {
                                   {newLesson.attachments && newLesson.attachments.length > 0 ? (
                                     <div className="border rounded-md divide-y">
                                       {newLesson.attachments.map((attachment, index) => (
-                                        <div 
-                                          key={index} 
-                                          className="flex justify-between items-center p-3"
-                                        >
-                                          <div className="flex items-center">
-                                            {attachment.type === 'pdf' && <FileIcon className="h-4 w-4 mr-2 text-red-500" />}
-                                            {attachment.type === 'audio' && <FileIcon className="h-4 w-4 mr-2 text-blue-500" />}
-                                            {attachment.type === 'document' && <FileIcon className="h-4 w-4 mr-2 text-green-500" />}
-                                            <div>
-                                              <p className="font-medium">{attachment.title}</p>
-                                              <p className="text-xs text-gray-500 truncate max-w-[300px]">{attachment.url}</p>
-                                            </div>
-                                          </div>
-                                          <Button 
-                                            variant="ghost" 
-                                            size="sm"
-                                            className="text-red-500 hover:text-red-700"
-                                            onClick={() => removeAttachment(index)}
-                                          >
-                                            <TrashIcon className="h-4 w-4" />
-                                          </Button>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-6 border border-dashed rounded-md">
-                                      <FileIcon className="h-8 w-8 mx-auto text-gray-400" />
-                                      <p className="mt-2 text-sm text-gray-500">No attachments added yet</p>
-                                    </div>
-                                  )}
-                                </div>
-                              </TabsContent>
-
-                              {/* Quiz Questions */}
-                              <TabsContent value="quiz" className="space-y-4 pt-4">
-                                <div className="mb-6">
-                                  <h3 className="text-sm font-medium mb-4">Add Quiz Questions</h3>
-                                  
-                                  <div className="space-y-4 mb-6 p-4 bg-white border rounded-md">
-                                    <div className="grid gap-2">
-                                      <Label htmlFor="quizQuestion">Question</Label>
-                                      <Input
-                                        id="quizQuestion"
-                                        placeholder="Enter your question"
-                                        value={newQuizQuestion.question}
-                                        onChange={(e) => setNewQuizQuestion({
-                                          ...newQuizQuestion, 
-                                          question: e.target.value
-                                        })}
-                                      />
-                                    </div>
-                                    
-                                    <div className="grid gap-2">
-                                      <Label>Options</Label>
-                                      <div className="space-y-2">
-                                        {newQuizQuestion.options.map((option, index) => (
-                                          <div key={index} className="flex items-center gap-2">
-                                            <div className="flex-grow">
-                                              <Input
-                                                placeholder={`Option ${index + 1}`}
-                                                value={option}
-                                                onChange={(e) => {
-                                                  const newOptions = [...newQuizQuestion.options];
-                                                  newOptions[index] = e.target.value;
-                                                  setNewQuizQuestion({...newQuizQuestion, options: newOptions});
-                                                }}
-                                              />
-                                            </div>
-                                            <Button
-                                              type="button"
-                                              variant={newQuizQuestion.correctAnswer === index ? "default" : "outline"}
-                                              size="sm"
-                                              className={newQuizQuestion.correctAnswer === index ? "bg-green-600" : ""}
-                                              onClick={() => setNewQuizQuestion({...newQuizQuestion, correctAnswer: index})}
-                                            >
-                                              <CheckIcon className="h-4 w-4" />
-                                            </Button>
-                                          </div>
-                                        ))}
-                                      </div>
-                                      <p className="text-xs text-gray-500 mt-1">
-                                        Click the checkmark button to mark the correct answer
-                                      </p>
-                                    </div>
-                                    
-                                    <Button 
-                                      type="button" 
-                                      onClick={handleAddQuizQuestion}
-                                      className="mt-2"
-                                    >
-                                      <PlusIcon className="mr-2 h-4 w-4" /> Add Question
-                                    </Button>
-                                  </div>
-                                  
-                                  {/* Quiz Questions List */}
-                                  {newLesson.quizQuestions && newLesson.quizQuestions.length > 0 ? (
-                                    <div className="border rounded-md">
-                                      <Accordion type="multiple" className="w-full">
-                                        {newLesson.quizQuestions.map((question, index) => (
-                                          <AccordionItem key={index} value={`item-${index}`}>
-                                            <AccordionTrigger className="px-4 hover:no-underline">
-                                              <div className="flex justify-between items-center w-full pr-4">
-                                                <span className="font-medium text-sm">
-                                                  Question {index + 1}
-                                                </span>
-                                              </div>
-                                            </AccordionTrigger>
-                                            <AccordionContent className="px-4 pb-4">
-                                              <div className="space-y-2">
-                                                <p className="font-medium">{question.question}</p>
-                                                <ul className="space-y-1 pl-5 list-disc">
-                                                  {question.options.map((option, optIndex) => (
-                                                    <li key={optIndex} className={optIndex === question.correctAnswer ? "text-green-600 font-medium" : ""}>
-                                                      {option} {optIndex === question.correctAnswer && "(Correct)"}
-                                                    </li>
-                                                  ))}
-                                                </ul>
-                                                <div className="pt-2 flex justify-end">
-                                                  <Button 
-                                                    variant="outline" 
-                                                    size="sm"
-                                                    className="text-red-500"
-                                                    onClick={() => removeQuizQuestion(index)}
-                                                  >
-                                                    <TrashIcon className="h-3 w-3 mr-1" /> Remove
-                                                  </Button>
-                                                </div>
-                                              </div>
-                                            </AccordionContent>
-                                          </AccordionItem>
-                                        ))}
-                                      </Accordion>
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-6 border border-dashed rounded-md">
-                                      <FileTextIcon className="h-8 w-8 mx-auto text-gray-400" />
-                                      <p className="mt-2 text-sm text-gray-500">No quiz questions added yet</p>
-                                    </div>
-                                  )}
-                                </div>
-                              </TabsContent>
-                            </Tabs>
-
-                            <div className="mt-6">
-                              <Button 
-                                onClick={handleAddLesson}
-                                className="bg-saffron hover:bg-saffron/90"
-                              >
-                                <PlusIcon className="mr-2 h-4 w-4" /> Add Lesson to Module
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex justify-between pt-8">
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setActiveTab("modules")}
-                        >
-                          Back to Modules
-                        </Button>
-                        <Button 
-                          onClick={() => {
-                            form.handleSubmit(onSubmit)();
-                          }}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          Create Course
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-    </main>
-  );
-};
-
-export default CourseCreation;
+                                        <div
