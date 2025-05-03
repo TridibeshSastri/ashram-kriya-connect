@@ -1,7 +1,7 @@
 
 import { useState, useEffect, ChangeEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Course } from './Courses';
+import { Course, CourseModule, Lesson } from './Courses';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -41,19 +41,21 @@ const formSchema = z.object({
   level: z.enum(["Beginner", "Intermediate", "Advanced"]),
 });
 
-// Define a module structure that aligns with both our form and the Course type
-interface ModuleContent {
-  text?: string;
-  videoUrl?: string;
-  imageUrl?: string;
-  pdfUrl?: string;
-}
-
+// Define a module structure that aligns with our form
 interface CourseModuleInternal {
   id: string;
   title: string;
-  description: string;
-  content: ModuleContent;
+  content: string;
+  lessons: LessonInternal[];
+}
+
+// Define a lesson structure for our internal use
+interface LessonInternal {
+  id: string;
+  title: string;
+  type: 'video' | 'text' | 'image';
+  content: string;
+  duration?: string;
 }
 
 const CourseEdit = () => {
@@ -90,17 +92,23 @@ const CourseEdit = () => {
           setCourse(foundCourse);
           
           // Convert course modules to our internal format
-          const internalModules = foundCourse.modules?.map(module => ({
-            id: module.id,
-            title: module.title,
-            description: module.description || '', // Default to empty string if missing
-            content: {
-              text: module.content?.text || '',
-              videoUrl: module.content?.videoUrl || '',
-              imageUrl: module.content?.imageUrl || '',
-              pdfUrl: module.content?.pdfUrl || '',
-            }
-          })) || [];
+          const internalModules = foundCourse.modules?.map(module => {
+            // For each module, convert its lessons to our internal format
+            const internalLessons = module.lessons.map(lesson => ({
+              id: lesson.id,
+              title: lesson.title,
+              type: lesson.type,
+              content: lesson.content,
+              duration: lesson.duration
+            }));
+            
+            return {
+              id: module.id,
+              title: module.title,
+              content: '', // Initialize with empty content
+              lessons: internalLessons
+            };
+          }) || [];
           
           setModules(internalModules);
           
@@ -133,8 +141,8 @@ const CourseEdit = () => {
     const newModule = {
       id: `module-${Date.now()}`,
       title: "",
-      description: "",
-      content: {}
+      content: "",
+      lessons: []
     };
     setModules([...modules, newModule]);
   };
@@ -157,10 +165,10 @@ const CourseEdit = () => {
     );
   };
 
-  // Handle file upload for a module
+  // Handle file upload for a lesson
   const handleFileUpload = (
     moduleId: string, 
-    type: 'image' | 'video' | 'pdf',
+    type: 'image' | 'video',
     event: ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
@@ -171,50 +179,28 @@ const CourseEdit = () => {
       reader.onload = (e) => {
         const result = e.target?.result as string;
         
+        // Create a new lesson with the uploaded content
+        const newLesson = {
+          id: `lesson-${Date.now()}`,
+          title: type === 'image' ? 'Image Content' : 'Video Content',
+          type: type,
+          content: result,
+          duration: type === 'video' ? '0:00' : undefined
+        };
+        
         setModules(modules.map(module => {
           if (module.id === moduleId) {
-            const updatedContent = { ...module.content };
-            
-            switch (type) {
-              case 'image':
-                updatedContent.imageUrl = result;
-                break;
-              case 'video':
-                updatedContent.videoUrl = result;
-                break;
-              case 'pdf':
-                updatedContent.pdfUrl = result;
-                break;
-            }
-            
             return {
               ...module,
-              content: updatedContent,
+              lessons: [...module.lessons, newLesson]
             };
           }
           return module;
         }));
       };
       
-      if (type === 'pdf') {
-        // Store PDF filename since we can't really preview it
-        const updatedModules = modules.map(module => {
-          if (module.id === moduleId) {
-            return {
-              ...module,
-              content: {
-                ...module.content,
-                pdfUrl: file.name, // Just store the file name for UI purposes
-              }
-            };
-          }
-          return module;
-        });
-        setModules(updatedModules);
-      } else {
-        // Read image/video as data URL
-        reader.readAsDataURL(file);
-      }
+      // Read image/video as data URL
+      reader.readAsDataURL(file);
       
       toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} uploaded successfully`);
     } catch (error) {
@@ -223,21 +209,79 @@ const CourseEdit = () => {
     }
   };
 
-  // Update module text content
-  const handleTextContentChange = (moduleId: string, text: string) => {
-    setModules(
-      modules.map(module =>
-        module.id === moduleId
-          ? {
-              ...module,
-              content: {
-                ...module.content,
-                text,
-              },
+  // Add text lesson to a module
+  const handleAddTextLesson = (moduleId: string) => {
+    const newLesson = {
+      id: `lesson-${Date.now()}`,
+      title: "Text Content",
+      type: 'text' as const,
+      content: '',
+    };
+    
+    setModules(modules.map(module => {
+      if (module.id === moduleId) {
+        return {
+          ...module,
+          lessons: [...module.lessons, newLesson]
+        };
+      }
+      return module;
+    }));
+  };
+
+  // Update lesson content
+  const handleLessonContentChange = (moduleId: string, lessonId: string, content: string) => {
+    setModules(modules.map(module => {
+      if (module.id === moduleId) {
+        return {
+          ...module,
+          lessons: module.lessons.map(lesson => {
+            if (lesson.id === lessonId) {
+              return {
+                ...lesson,
+                content
+              };
             }
-          : module
-      )
-    );
+            return lesson;
+          })
+        };
+      }
+      return module;
+    }));
+  };
+
+  // Update lesson title
+  const handleLessonTitleChange = (moduleId: string, lessonId: string, title: string) => {
+    setModules(modules.map(module => {
+      if (module.id === moduleId) {
+        return {
+          ...module,
+          lessons: module.lessons.map(lesson => {
+            if (lesson.id === lessonId) {
+              return {
+                ...lesson,
+                title
+              };
+            }
+            return lesson;
+          })
+        };
+      }
+      return module;
+    }));
+  };
+
+  // Remove lesson
+  const handleRemoveLesson = (moduleId: string, lessonId: string) => {
+    setModules(modules.map(module => {
+      if (module.id === moduleId) {
+        return {
+          ...module,
+          lessons: module.lessons.filter(lesson => lesson.id !== lessonId)
+        };
+      }
+      return module;
+    }));
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -250,11 +294,11 @@ const CourseEdit = () => {
 
       // Check if any modules are incomplete
       const incompleteModule = modules.find(
-        module => !module.title || !module.description
+        module => !module.title
       );
       
       if (incompleteModule) {
-        toast.error("Please complete all module titles and descriptions");
+        toast.error("Please complete all module titles");
         return;
       }
 
@@ -263,13 +307,22 @@ const CourseEdit = () => {
       const courses: Course[] = storedCourses ? JSON.parse(storedCourses) : [];
       
       // Convert our internal modules format to Course modules format
-      const courseModules = modules.map(module => ({
-        id: module.id,
-        title: module.title,
-        description: module.description,
-        content: module.content,
-        lessons: [] // Add empty lessons array to satisfy CourseModule type
-      }));
+      const courseModules: CourseModule[] = modules.map(module => {
+        // Convert internal lessons to Course lessons format
+        const lessons: Lesson[] = module.lessons.map(lesson => ({
+          id: lesson.id,
+          title: lesson.title,
+          type: lesson.type,
+          content: lesson.content,
+          duration: lesson.duration
+        }));
+        
+        return {
+          id: module.id,
+          title: module.title,
+          lessons: lessons
+        };
+      });
       
       // Update the course
       const updatedCourse: Course = {
@@ -437,74 +490,30 @@ const CourseEdit = () => {
                         </div>
                         
                         <div className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor={`module-title-${module.id}`}>Module Title</Label>
-                              <Input
-                                id={`module-title-${module.id}`}
-                                value={module.title}
-                                onChange={(e) => handleModuleChange(module.id, 'title', e.target.value)}
-                                placeholder="Enter module title"
-                              />
-                            </div>
-                            
-                            <div>
-                              <Label htmlFor={`module-desc-${module.id}`}>Module Description</Label>
-                              <Input
-                                id={`module-desc-${module.id}`}
-                                value={module.description}
-                                onChange={(e) => handleModuleChange(module.id, 'description', e.target.value)}
-                                placeholder="Enter module description"
-                              />
-                            </div>
-                          </div>
-                          
                           <div>
-                            <Label htmlFor={`module-content-${module.id}`}>Module Content</Label>
-                            <Textarea
-                              id={`module-content-${module.id}`}
-                              value={module.content.text || ""}
-                              onChange={(e) => handleTextContentChange(module.id, e.target.value)}
-                              placeholder="Enter module content text"
-                              className="min-h-24"
+                            <Label htmlFor={`module-title-${module.id}`}>Module Title</Label>
+                            <Input
+                              id={`module-title-${module.id}`}
+                              value={module.title}
+                              onChange={(e) => handleModuleChange(module.id, 'title', e.target.value)}
+                              placeholder="Enter module title"
                             />
                           </div>
                           
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                            <div>
-                              <Label htmlFor={`module-video-${module.id}`}>Upload Video</Label>
-                              <div className="mt-2 flex items-center">
-                                <Input
-                                  id={`module-video-${module.id}`}
-                                  type="file"
-                                  accept="video/*"
-                                  onChange={(e) => handleFileUpload(module.id, 'video', e)}
-                                  className="hidden"
-                                />
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  onClick={() => document.getElementById(`module-video-${module.id}`)?.click()}
-                                  className="w-full"
-                                >
-                                  <UploadIcon className="mr-2 h-4 w-4" />
-                                  {module.content.videoUrl ? "Change Video" : "Upload Video"}
-                                </Button>
-                              </div>
-                              {module.content.videoUrl && (
-                                <div className="mt-2">
-                                  <video 
-                                    src={module.content.videoUrl} 
-                                    controls 
-                                    className="max-h-32 mt-2 rounded-md"
-                                  />
-                                </div>
-                              )}
-                            </div>
+                          <div className="space-y-2">
+                            <Label>Module Content</Label>
                             
-                            <div>
-                              <Label htmlFor={`module-image-${module.id}`}>Upload Image</Label>
-                              <div className="mt-2 flex items-center">
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleAddTextLesson(module.id)}
+                              >
+                                Add Text
+                              </Button>
+                              
+                              <div>
                                 <Input
                                   id={`module-image-${module.id}`}
                                   type="file"
@@ -515,48 +524,91 @@ const CourseEdit = () => {
                                 <Button
                                   type="button"
                                   variant="outline"
+                                  size="sm"
                                   onClick={() => document.getElementById(`module-image-${module.id}`)?.click()}
-                                  className="w-full"
                                 >
-                                  <UploadIcon className="mr-2 h-4 w-4" />
-                                  {module.content.imageUrl ? "Change Image" : "Upload Image"}
+                                  Add Image
                                 </Button>
                               </div>
-                              {module.content.imageUrl && (
-                                <div className="mt-2">
-                                  <img 
-                                    src={module.content.imageUrl} 
-                                    alt="Module image" 
-                                    className="max-h-32 mt-2 rounded-md"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                            
-                            <div>
-                              <Label htmlFor={`module-pdf-${module.id}`}>Upload PDF</Label>
-                              <div className="mt-2 flex items-center">
+                              
+                              <div>
                                 <Input
-                                  id={`module-pdf-${module.id}`}
+                                  id={`module-video-${module.id}`}
                                   type="file"
-                                  accept=".pdf"
-                                  onChange={(e) => handleFileUpload(module.id, 'pdf', e)}
+                                  accept="video/*"
+                                  onChange={(e) => handleFileUpload(module.id, 'video', e)}
                                   className="hidden"
                                 />
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  onClick={() => document.getElementById(`module-pdf-${module.id}`)?.click()}
-                                  className="w-full"
+                                  size="sm"
+                                  onClick={() => document.getElementById(`module-video-${module.id}`)?.click()}
                                 >
-                                  <UploadIcon className="mr-2 h-4 w-4" />
-                                  {module.content.pdfUrl ? "Change PDF" : "Upload PDF"}
+                                  Add Video
                                 </Button>
                               </div>
-                              {module.content.pdfUrl && (
-                                <div className="mt-2 text-sm text-gray-600">
-                                  File: {module.content.pdfUrl}
+                            </div>
+                            
+                            {/* Lesson list */}
+                            <div className="mt-4 space-y-4">
+                              {module.lessons.length === 0 ? (
+                                <div className="text-sm text-gray-500 p-4 border border-dashed rounded-md text-center">
+                                  No content yet. Add some using the buttons above.
                                 </div>
+                              ) : (
+                                module.lessons.map((lesson, lessonIndex) => (
+                                  <div key={lesson.id} className="border rounded-md p-4">
+                                    <div className="flex justify-between items-center mb-2">
+                                      <div className="flex items-center">
+                                        <span className="text-sm font-semibold mr-2">
+                                          {lesson.type === 'text' ? 'Text' : 
+                                           lesson.type === 'image' ? 'Image' : 'Video'}
+                                        </span>
+                                        <Input
+                                          value={lesson.title}
+                                          onChange={(e) => handleLessonTitleChange(module.id, lesson.id, e.target.value)}
+                                          className="text-sm h-8 w-48"
+                                          placeholder="Lesson title"
+                                        />
+                                      </div>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleRemoveLesson(module.id, lesson.id)}
+                                        className="h-8 w-8 p-0"
+                                      >
+                                        <TrashIcon className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                    
+                                    {lesson.type === 'text' ? (
+                                      <Textarea
+                                        value={lesson.content}
+                                        onChange={(e) => handleLessonContentChange(module.id, lesson.id, e.target.value)}
+                                        placeholder="Enter lesson text content"
+                                        className="min-h-24"
+                                      />
+                                    ) : lesson.type === 'image' ? (
+                                      <div className="mt-2">
+                                        <img
+                                          src={lesson.content}
+                                          alt="Lesson image"
+                                          className="max-h-32 rounded-md"
+                                        />
+                                      </div>
+                                    ) : (
+                                      <div className="mt-2">
+                                        <video
+                                          src={lesson.content}
+                                          controls
+                                          className="max-h-32 rounded-md"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                ))
                               )}
                             </div>
                           </div>
