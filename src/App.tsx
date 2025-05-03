@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
@@ -45,7 +46,7 @@ function App() {
         <Route path="/social-service" element={<SocialService />} />
         <Route path="/donate" element={<Donate />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/devotee-login" element={<DevoteeAuth />} />
+        <Route path="/devotee-auth" element={<DevoteeAuth />} />
         <Route path="/devotee-dashboard" element={<DevoteeDashboard />} />
         <Route path="/admin-login" element={<AdminAuth />} />
         <Route path="/admin" element={<ProtectedAdminRoute><Admin /></ProtectedAdminRoute>} />

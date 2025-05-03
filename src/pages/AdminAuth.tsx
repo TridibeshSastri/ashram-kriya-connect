@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -25,23 +25,26 @@ const AdminAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   // Check if admin is already logged in
-  const checkAdminStatus = () => {
-    try {
-      const adminUser = localStorage.getItem('adminUser');
-      const isAdmin = adminUser ? JSON.parse(adminUser).isAdmin : false;
-      return isAdmin;
-    } catch (error) {
-      return false;
-    }
-  };
-
-  // Redirect to admin dashboard if already logged in
-  if (checkAdminStatus()) {
-    navigate('/admin');
-    return null;
-  }
+  useEffect(() => {
+    const checkAdminStatus = () => {
+      try {
+        const adminUser = localStorage.getItem('adminUser');
+        const isAdmin = adminUser ? JSON.parse(adminUser).isAdmin : false;
+        setIsAdmin(isAdmin);
+        
+        if (isAdmin) {
+          navigate('/admin');
+        }
+      } catch (error) {
+        setIsAdmin(false);
+      }
+    };
+    
+    checkAdminStatus();
+  }, [navigate]);
 
   // Login form
   const form = useForm<AdminLoginFormValues>({
@@ -87,8 +90,13 @@ const AdminAuth = () => {
     }, 1000);
   };
 
+  // Don't render anything while checking admin status
+  if (isAdmin === true) {
+    return null; // Will be redirected by the useEffect
+  }
+
   return (
-    <main className="bg-accent/20">
+    <main className="bg-accent/20 pt-20 pb-16">
       <PageHeader
         title="Admin Authentication"
         description="Login to access the admin dashboard"
