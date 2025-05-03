@@ -7,7 +7,6 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
   
   useEffect(() => {
@@ -39,19 +38,6 @@ const Navbar = () => {
       } else {
         setIsLoggedIn(false);
       }
-      
-      // Check admin login status
-      const adminUser = localStorage.getItem('adminUser');
-      if (adminUser) {
-        try {
-          const admin = JSON.parse(adminUser);
-          setIsAdmin(!!admin.isAdmin);
-        } catch (e) {
-          setIsAdmin(false);
-        }
-      } else {
-        setIsAdmin(false);
-      }
     };
 
     checkLoginStatus();
@@ -70,11 +56,6 @@ const Navbar = () => {
     { name: 'Resources', path: '/resources' },
     { name: 'Contact', path: '/contact' },
   ];
-
-  // Only add admin link if user is admin
-  if (isAdmin) {
-    navLinks.push({ name: 'Admin', path: '/admin' });
-  }
 
   const isActive = (path: string) => {
     return location.pathname === path;

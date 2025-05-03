@@ -52,7 +52,7 @@ const Footer = () => {
               <li><Link to="/resources" className="text-gray-700 hover:text-saffron transition-colors">Resources</Link></li>
               <li><Link to="/donate" className="text-gray-700 hover:text-saffron transition-colors">Donate</Link></li>
               {isHomePage && (
-                <li><Link to="/admin-auth" className="text-gray-700 hover:text-saffron transition-colors">Admin Login</Link></li>
+                <li><Link to="/admin-login" className="text-gray-700 hover:text-saffron transition-colors">Admin Login</Link></li>
               )}
             </ul>
           </div>
@@ -104,6 +104,13 @@ const Footer = () => {
         {/* Copyright */}
         <div className="mt-12 pt-4 border-t border-gray-200 text-center text-xs text-gray-600">
           <p>© {currentYear} Aukhanda Shri Kriyayog Sadhan Mandir Sevashram. All rights reserved.</p>
+          {isHomePage && (
+            <p className="mt-2">
+              <Link to="/admin-login" className="text-gray-600 hover:text-saffron transition-colors">
+                Admin Access
+              </Link>
+            </p>
+          )}
         </div>
       </div>
     </footer>
