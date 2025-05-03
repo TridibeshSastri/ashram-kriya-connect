@@ -49,8 +49,7 @@ const AdminCourseManager = () => {
   };
 
   const handleEditCourse = (courseId: string) => {
-    // In a real app, this would navigate to an edit page
-    toast.info("Edit functionality will be implemented in the future");
+    navigate(`/course-edit/${courseId}`);
   };
 
   const handleCreateCourse = () => {

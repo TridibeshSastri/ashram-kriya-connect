@@ -19,6 +19,7 @@ import DevoteeAuth from './pages/DevoteeAuth';
 import DevoteeDashboard from './pages/DevoteeDashboard';
 import NotFound from './pages/NotFound';
 import CourseCreation from './pages/CourseCreation';
+import CourseEdit from './pages/CourseEdit';
 import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import { Toaster } from "@/components/ui/sonner";
 import './App.css';
@@ -51,6 +52,7 @@ function App() {
         <Route path="/admin-login" element={<AdminAuth />} />
         <Route path="/admin" element={<ProtectedAdminRoute><Admin /></ProtectedAdminRoute>} />
         <Route path="/course-creation" element={<ProtectedAdminRoute><CourseCreation /></ProtectedAdminRoute>} />
+        <Route path="/course-edit/:courseId" element={<ProtectedAdminRoute><CourseEdit /></ProtectedAdminRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
