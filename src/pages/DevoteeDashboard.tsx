@@ -1,12 +1,12 @@
 
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, BookOpen, FileText, ShoppingBag } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Mock data
 const mockCourses = [
@@ -28,41 +28,16 @@ const mockResources = [
 ];
 
 const DevoteeDashboard = () => {
-  const navigate = useNavigate();
-  const [devotee, setDevotee] = useState<{name: string; email: string;} | null>(null);
+  const { userData, signOut } = useAuth();
 
-  useEffect(() => {
-    // Check if user is logged in
-    const storedUser = localStorage.getItem('devoteeUser');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        if (!parsedUser.isAuthenticated) {
-          navigate('/devotee-auth');
-          return;
-        }
-        setDevotee(parsedUser);
-      } catch (e) {
-        navigate('/devotee-auth');
-      }
-    } else {
-      navigate('/devotee-auth');
-    }
-  }, [navigate]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('devoteeUser');
-    navigate('/devotee-auth');
-  };
-
-  if (!devotee) {
-    return null; // Will redirect via useEffect
+  if (!userData) {
+    return null; // Should be caught by ProtectedRoute
   }
 
   return (
     <main>
       <PageHeader
-        title={`Welcome, ${devotee.name}`}
+        title={`Welcome, ${userData.fullName || 'Devotee'}`}
         description="View and manage your spiritual journey with ASKSMS."
       />
 
@@ -70,9 +45,9 @@ const DevoteeDashboard = () => {
         <div className="container-custom">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-              <p className="text-muted-foreground">{devotee.email}</p>
+              <p className="text-muted-foreground">{userData.email}</p>
             </div>
-            <Button variant="outline" onClick={handleLogout}>Log Out</Button>
+            <Button variant="outline" onClick={() => signOut()}>Log Out</Button>
           </div>
 
           <Tabs defaultValue="courses" className="w-full">

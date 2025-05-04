@@ -14,13 +14,14 @@ import Contact from './pages/Contact';
 import CourseDetail from './pages/CourseDetail';
 import Courses from './pages/Courses';
 import Admin from './pages/Admin';
-import AdminAuth from './pages/AdminAuth';
-import DevoteeAuth from './pages/DevoteeAuth';
+import Auth from './pages/Auth';
+import Unauthorized from './pages/Unauthorized';
 import DevoteeDashboard from './pages/DevoteeDashboard';
 import NotFound from './pages/NotFound';
 import CourseCreation from './pages/CourseCreation';
 import CourseEdit from './pages/CourseEdit';
-import ProtectedAdminRoute from './components/ProtectedAdminRoute';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider } from './contexts/AuthContext';
 import { Toaster } from "@/components/ui/sonner";
 import './App.css';
 
@@ -34,30 +35,54 @@ function App() {
   if (isSSR) return <></>;
 
   return (
-    <Router>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/kriyayoga" element={<Kriyayoga />} />
-        <Route path="/events" element={<Events />} />
-        <Route path="/resources" element={<Resources />} />
-        <Route path="/resources/courses" element={<Courses />} />
-        <Route path="/resources/courses/:courseId" element={<CourseDetail />} />
-        <Route path="/social-service" element={<SocialService />} />
-        <Route path="/donate" element={<Donate />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/devotee-auth" element={<DevoteeAuth />} />
-        <Route path="/devotee-dashboard" element={<DevoteeDashboard />} />
-        <Route path="/admin-login" element={<AdminAuth />} />
-        <Route path="/admin" element={<ProtectedAdminRoute><Admin /></ProtectedAdminRoute>} />
-        <Route path="/course-creation" element={<ProtectedAdminRoute><CourseCreation /></ProtectedAdminRoute>} />
-        <Route path="/course-edit/:courseId" element={<ProtectedAdminRoute><CourseEdit /></ProtectedAdminRoute>} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <Footer />
-      <Toaster />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/kriyayoga" element={<Kriyayoga />} />
+          <Route path="/events" element={<Events />} />
+          <Route path="/resources" element={<Resources />} />
+          <Route path="/resources/courses" element={<Courses />} />
+          <Route path="/resources/courses/:courseId" element={<CourseDetail />} />
+          <Route path="/social-service" element={<SocialService />} />
+          <Route path="/donate" element={<Donate />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          
+          {/* Protected Routes */}
+          <Route path="/devotee-dashboard" element={
+            <ProtectedRoute requiredRoles={['devotee']}>
+              <DevoteeDashboard />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin" element={
+            <ProtectedRoute requiredRoles={['admin']}>
+              <Admin />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/course-creation" element={
+            <ProtectedRoute requiredRoles={['admin', 'mentor']}>
+              <CourseCreation />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/course-edit/:courseId" element={
+            <ProtectedRoute requiredRoles={['admin', 'mentor']}>
+              <CourseEdit />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Footer />
+        <Toaster />
+      </Router>
+    </AuthProvider>
   );
 }
 

@@ -2,12 +2,13 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
+  const { isAuthenticated, isDevotee, isMentor, isAdmin, userData, signOut } = useAuth();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -23,30 +24,6 @@ const Navbar = () => {
     setIsOpen(false);
   }, [location]);
 
-  // Check if devotee is logged in
-  useEffect(() => {
-    const checkLoginStatus = () => {
-      // Check devotee login status
-      const devoteeUser = localStorage.getItem('devoteeUser');
-      if (devoteeUser) {
-        try {
-          const user = JSON.parse(devoteeUser);
-          setIsLoggedIn(!!user.isAuthenticated);
-        } catch (e) {
-          setIsLoggedIn(false);
-        }
-      } else {
-        setIsLoggedIn(false);
-      }
-    };
-
-    checkLoginStatus();
-    
-    // Listen for storage changes (in case of login/logout)
-    window.addEventListener('storage', checkLoginStatus);
-    return () => window.removeEventListener('storage', checkLoginStatus);
-  }, [location.pathname]);
-
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'About Us', path: '/about' },
@@ -57,13 +34,35 @@ const Navbar = () => {
     { name: 'Contact', path: '/contact' },
   ];
 
+  // Role-specific links
+  const devoteeLinks = isAuthenticated && isDevotee ? [
+    { name: 'My Dashboard', path: '/devotee-dashboard' }
+  ] : [];
+
+  const mentorLinks = isAuthenticated && isMentor ? [
+    { name: 'Course Creation', path: '/course-creation' }
+  ] : [];
+
+  const adminLinks = isAuthenticated && isAdmin ? [
+    { name: 'Admin Dashboard', path: '/admin' }
+  ] : [];
+
+  // Authentication link
+  const authLink = isAuthenticated 
+    ? { name: userData?.fullName || 'Account', path: isDevotee ? '/devotee-dashboard' : '/auth' }
+    : { name: 'Login / Register', path: '/auth' };
+
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
-  const devoteeLink = isLoggedIn 
-    ? { name: 'My Dashboard', path: '/devotee-dashboard' }
-    : { name: 'Devotee Login', path: '/devotee-auth' };
+  // All navigation links combined
+  const allLinks = [...navLinks, ...devoteeLinks, ...mentorLinks, ...adminLinks];
+
+  const handleLogout = (e: React.MouseEvent) => {
+    e.preventDefault();
+    signOut();
+  };
 
   return (
     <nav 
@@ -84,8 +83,8 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex space-x-1 lg:space-x-2">
-          {navLinks.map((link) => (
+        <div className="hidden md:flex space-x-1 lg:space-x-2 items-center">
+          {allLinks.map((link) => (
             <Link
               key={link.name}
               to={link.path}
@@ -98,16 +97,32 @@ const Navbar = () => {
               {link.name}
             </Link>
           ))}
-          <Link
-            to={devoteeLink.path}
-            className={`px-3 py-2 rounded-md text-sm lg:text-base transition-colors ${
-              isActive(devoteeLink.path)
-                ? 'text-saffron font-medium'
-                : 'text-foreground hover:text-saffron'
-            }`}
-          >
-            {devoteeLink.name}
-          </Link>
+
+          {isAuthenticated ? (
+            <div className="flex items-center gap-2">
+              <div className="text-sm lg:text-base px-3 py-2">
+                Hello, {userData?.fullName?.split(' ')[0] || 'User'}
+              </div>
+              <button
+                onClick={handleLogout}
+                className="text-sm lg:text-base px-3 py-2 text-red-600 hover:text-red-800"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <Link
+              to={authLink.path}
+              className={`px-3 py-2 rounded-md text-sm lg:text-base transition-colors ${
+                isActive(authLink.path)
+                  ? 'text-saffron font-medium'
+                  : 'text-foreground hover:text-saffron'
+              }`}
+            >
+              {authLink.name}
+            </Link>
+          )}
+          
           <Link 
             to="/donate"
             className="ml-1 bg-saffron hover:bg-saffron/90 text-white px-4 py-2 rounded-md text-sm lg:text-base transition-colors"
@@ -129,7 +144,7 @@ const Navbar = () => {
       {isOpen && (
         <div className="md:hidden bg-white shadow-md animate-fade-in">
           <div className="container-custom py-4 flex flex-col space-y-2">
-            {navLinks.map((link) => (
+            {allLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.path}
@@ -142,16 +157,32 @@ const Navbar = () => {
                 {link.name}
               </Link>
             ))}
-            <Link
-              to={devoteeLink.path}
-              className={`px-4 py-2 rounded-md transition-colors ${
-                isActive(devoteeLink.path)
-                  ? 'bg-accent text-saffron font-medium'
-                  : 'text-foreground hover:bg-accent/50'
-              }`}
-            >
-              {devoteeLink.name}
-            </Link>
+            
+            {isAuthenticated ? (
+              <>
+                <div className="px-4 py-2 font-medium">
+                  Hello, {userData?.fullName?.split(' ')[0] || 'User'}
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 text-left text-red-600 hover:bg-accent/50 rounded-md"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                to={authLink.path}
+                className={`px-4 py-2 rounded-md transition-colors ${
+                  isActive(authLink.path)
+                    ? 'bg-accent text-saffron font-medium'
+                    : 'text-foreground hover:bg-accent/50'
+                }`}
+              >
+                {authLink.name}
+              </Link>
+            )}
+            
             <Link 
               to="/donate"
               className="bg-saffron hover:bg-saffron/90 text-white px-4 py-2 rounded-md text-center transition-colors"

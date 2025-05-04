@@ -9,12 +9,20 @@ import AdminResourceManager from '../components/admin/AdminResourceManager';
 import AdminDevoteeManager from '../components/admin/AdminDevoteeManager';
 import AdminCourseManager from '../components/admin/AdminCourseManager';
 import AdminDonationManager from '../components/admin/AdminDonationManager';
+import AdminUserRolesManager from '../components/admin/AdminUserRolesManager';
 import { Button } from '@/components/ui/button';
 import { PlusIcon } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Admin = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("events");
+  const { isAdmin } = useAuth();
+  
+  if (!isAdmin) {
+    navigate('/unauthorized');
+    return null;
+  }
   
   return (
     <main>
@@ -33,19 +41,20 @@ const Admin = () => {
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <div className="flex justify-between items-center mb-8">
-              <TabsList className="grid w-full grid-cols-6 lg:w-[900px]">
+            <div className="flex justify-between items-center mb-8 overflow-x-auto">
+              <TabsList className="grid w-full grid-cols-7 lg:w-[1000px]">
                 <TabsTrigger value="events">Events</TabsTrigger>
                 <TabsTrigger value="users">User Bookings</TabsTrigger>
                 <TabsTrigger value="resources">Resources</TabsTrigger>
                 <TabsTrigger value="courses">Courses</TabsTrigger>
                 <TabsTrigger value="devotees">Devotees</TabsTrigger>
                 <TabsTrigger value="donations">Donations</TabsTrigger>
+                <TabsTrigger value="roles">User Roles</TabsTrigger>
               </TabsList>
               
               {activeTab === "courses" && (
                 <Button 
-                  className="bg-saffron hover:bg-saffron/90 ml-4"
+                  className="bg-saffron hover:bg-saffron/90 ml-4 whitespace-nowrap"
                   onClick={() => navigate('/course-creation')}
                 >
                   <PlusIcon className="mr-2 h-4 w-4" />
@@ -76,6 +85,10 @@ const Admin = () => {
             
             <TabsContent value="donations" className="pt-4">
               <AdminDonationManager />
+            </TabsContent>
+            
+            <TabsContent value="roles" className="pt-4">
+              <AdminUserRolesManager />
             </TabsContent>
           </Tabs>
         </div>
