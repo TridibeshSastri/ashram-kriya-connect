@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -42,12 +42,15 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp, isAuthenticated } = useAuth();
+  const { signIn, signUp, isAuthenticated, getDashboardPath } = useAuth();
+  const navigate = useNavigate();
 
-  // If already authenticated, redirect to home
-  if (isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
+  // If already authenticated, redirect to appropriate dashboard
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(getDashboardPath(), { replace: true });
+    }
+  }, [isAuthenticated, navigate, getDashboardPath]);
 
   // Login form
   const loginForm = useForm<LoginFormValues>({
@@ -71,8 +74,12 @@ const Auth = () => {
 
   const onLoginSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
-    await signIn(values.email, values.password);
+    const { error } = await signIn(values.email, values.password);
     setIsLoading(false);
+    
+    if (!error) {
+      navigate(getDashboardPath(), { replace: true });
+    }
   };
 
   const onRegisterSubmit = async (values: RegisterFormValues) => {

@@ -29,6 +29,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string) => Promise<{error: any, data: any}>;
   signOut: () => Promise<void>;
   refreshUserData: () => Promise<void>;
+  getDashboardPath: () => string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -91,6 +92,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Get dashboard path based on user role
+  const getDashboardPath = () => {
+    if (roles.includes('admin')) return '/admin-dashboard';
+    if (roles.includes('mentor')) return '/mentor-dashboard';
+    if (roles.includes('devotee')) return '/devotee-dashboard';
+    return '/auth';
+  };
+
   // Initialize auth state
   useEffect(() => {
     setIsLoading(true);
@@ -134,6 +143,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      toast.success("Logged in successfully");
       return { error: null };
     } catch (error: any) {
       toast.error(`Login failed: ${error.message}`);
@@ -187,7 +197,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signIn,
     signUp,
     signOut,
-    refreshUserData
+    refreshUserData,
+    getDashboardPath
   };
 
   return (

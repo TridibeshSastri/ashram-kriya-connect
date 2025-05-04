@@ -13,10 +13,12 @@ import Donate from './pages/Donate';
 import Contact from './pages/Contact';
 import CourseDetail from './pages/CourseDetail';
 import Courses from './pages/Courses';
-import Admin from './pages/Admin';
+import AdminDashboard from './pages/AdminDashboard';
 import Auth from './pages/Auth';
 import Unauthorized from './pages/Unauthorized';
 import DevoteeDashboard from './pages/DevoteeDashboard';
+import MentorDashboard from './pages/MentorDashboard';
+import Admin from './pages/Admin';
 import NotFound from './pages/NotFound';
 import CourseCreation from './pages/CourseCreation';
 import CourseEdit from './pages/CourseEdit';
@@ -52,10 +54,22 @@ function App() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           
-          {/* Protected Routes */}
+          {/* Role-based Protected Routes */}
           <Route path="/devotee-dashboard" element={
             <ProtectedRoute requiredRoles={['devotee']}>
               <DevoteeDashboard />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/mentor-dashboard" element={
+            <ProtectedRoute requiredRoles={['mentor']}>
+              <MentorDashboard />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin-dashboard" element={
+            <ProtectedRoute requiredRoles={['admin']}>
+              <AdminDashboard />
             </ProtectedRoute>
           } />
           

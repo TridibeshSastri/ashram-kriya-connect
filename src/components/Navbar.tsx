@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -8,6 +8,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { isAuthenticated, isDevotee, isMentor, isAdmin, userData, signOut } = useAuth();
   
   useEffect(() => {
@@ -34,22 +35,22 @@ const Navbar = () => {
     { name: 'Contact', path: '/contact' },
   ];
 
+  // Get dashboard path based on user role
+  const getDashboardPath = () => {
+    if (isAdmin) return '/admin-dashboard';
+    if (isMentor) return '/mentor-dashboard';
+    if (isDevotee) return '/devotee-dashboard';
+    return '/auth';
+  };
+
   // Role-specific links
-  const devoteeLinks = isAuthenticated && isDevotee ? [
-    { name: 'My Dashboard', path: '/devotee-dashboard' }
-  ] : [];
-
-  const mentorLinks = isAuthenticated && isMentor ? [
-    { name: 'Course Creation', path: '/course-creation' }
-  ] : [];
-
-  const adminLinks = isAuthenticated && isAdmin ? [
-    { name: 'Admin Dashboard', path: '/admin' }
+  const dashboardLink = isAuthenticated ? [
+    { name: 'My Dashboard', path: getDashboardPath() }
   ] : [];
 
   // Authentication link
   const authLink = isAuthenticated 
-    ? { name: userData?.fullName || 'Account', path: isDevotee ? '/devotee-dashboard' : '/auth' }
+    ? { name: userData?.fullName || 'Account', path: getDashboardPath() }
     : { name: 'Login / Register', path: '/auth' };
 
   const isActive = (path: string) => {
@@ -57,7 +58,7 @@ const Navbar = () => {
   };
 
   // All navigation links combined
-  const allLinks = [...navLinks, ...devoteeLinks, ...mentorLinks, ...adminLinks];
+  const allLinks = [...navLinks, ...dashboardLink];
 
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
