@@ -3,14 +3,15 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Tables, Enums } from '@/integrations/supabase/database.types';
 
-export type UserRole = 'devotee' | 'mentor' | 'admin';
+export type UserRole = Enums<'user_role'>;
 
 interface UserData {
   id: string;
   email: string;
-  fullName?: string;
-  avatarUrl?: string;
+  fullName?: string | null;
+  avatarUrl?: string | null;
   roles: UserRole[];
 }
 
@@ -59,17 +60,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (rolesError) throw rolesError;
 
-      const roles = userRoles.map(r => r.role) as UserRole[];
+      const userRolesList = userRoles.map(r => r.role) as UserRole[];
       
-      setUserData({
-        id: profile?.id || userId,
-        email: profile?.email || '',
-        fullName: profile?.full_name,
-        avatarUrl: profile?.avatar_url,
-        roles: roles
-      });
+      if (profile) {
+        setUserData({
+          id: profile.id || userId,
+          email: profile.email || '',
+          fullName: profile.full_name,
+          avatarUrl: profile.avatar_url,
+          roles: userRolesList
+        });
+      } else {
+        setUserData({
+          id: userId,
+          email: '',
+          roles: userRolesList
+        });
+      }
       
-      setRoles(roles);
+      setRoles(userRolesList);
     } catch (error: any) {
       console.error('Error fetching user data:', error.message);
     }

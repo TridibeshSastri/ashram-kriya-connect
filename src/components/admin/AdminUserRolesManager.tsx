@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth, UserRole } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { Tables } from '@/integrations/supabase/database.types';
 
 import {
   Table,
@@ -58,7 +59,7 @@ const AdminUserRolesManager = () => {
       
       // Combine the data
       const usersWithRoles: UserWithRoles[] = profiles.map(profile => {
-        const roles = userRoles
+        const userRolesList = userRoles
           .filter(r => r.user_id === profile.id)
           .map(r => r.role as UserRole);
         
@@ -66,7 +67,7 @@ const AdminUserRolesManager = () => {
           id: profile.id,
           email: profile.email || '',
           fullName: profile.full_name || '',
-          roles: roles,
+          roles: userRolesList,
           created_at: profile.created_at
         };
       });
@@ -84,18 +85,22 @@ const AdminUserRolesManager = () => {
     try {
       if (hasRole) {
         // Remove role
-        const { error } = await supabase.rpc('remove_role', {
-          target_user_id: userId,
-          role_to_remove: role
+        const { error } = await supabase.functions.invoke('remove_role', {
+          body: {
+            target_user_id: userId,
+            role_to_remove: role
+          }
         });
         
         if (error) throw error;
         toast.success(`Removed ${role} role`);
       } else {
         // Add role
-        const { error } = await supabase.rpc('assign_role', {
-          target_user_id: userId,
-          role_to_assign: role
+        const { error } = await supabase.functions.invoke('assign_role', {
+          body: {
+            target_user_id: userId,
+            role_to_assign: role
+          }
         });
         
         if (error) throw error;

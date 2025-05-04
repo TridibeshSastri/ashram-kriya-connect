@@ -1,1 +1,8 @@
+
 project_id = "npwcdxrynfuphtxoqxpt"
+
+[functions.assign_role]
+verify_jwt = true
+
+[functions.remove_role]
+verify_jwt = true
