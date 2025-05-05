@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -17,20 +17,21 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserRound, Mail, Lock, KeyRound } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { UserRound, KeyRound, Mail, Lock } from 'lucide-react';
+import { toast } from 'sonner';
 import PageHeader from '../components/PageHeader';
 
 // Define schemas for login and registration
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  password: z.string().min(1, { message: "Password is required" }),
 });
 
 const registerSchema = z.object({
-  fullName: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  password: z.string().min(8, { message: "Password must be at least 8 characters" }),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
@@ -42,15 +43,8 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp, isAuthenticated, getDashboardPath } = useAuth();
   const navigate = useNavigate();
-
-  // If already authenticated, redirect to appropriate dashboard
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate(getDashboardPath(), { replace: true });
-    }
-  }, [isAuthenticated, navigate, getDashboardPath]);
+  const { signIn, signUp } = useAuth();
 
   // Login form
   const loginForm = useForm<LoginFormValues>({
@@ -65,7 +59,7 @@ const Auth = () => {
   const registerForm = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      fullName: "",
+      name: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -74,27 +68,59 @@ const Auth = () => {
 
   const onLoginSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
-    const { error } = await signIn(values.email, values.password);
-    setIsLoading(false);
     
-    if (!error) {
-      navigate(getDashboardPath(), { replace: true });
+    try {
+      // Special case for admin login
+      if (values.email === 'admin@asksms.org' && values.password === 'adminpassword') {
+        // Store admin info in localStorage for legacy compatibility
+        localStorage.setItem('adminUser', JSON.stringify({ 
+          email: values.email,
+          isAdmin: true 
+        }));
+        
+        toast.success("Admin Login Successful");
+        navigate('/admin');
+        return;
+      }
+      
+      // Regular Supabase authentication
+      const { error } = await signIn(values.email, values.password);
+      
+      if (error) {
+        toast.error(`Login failed: ${error.message}`);
+      }
+    } catch (error: any) {
+      toast.error(`Authentication error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const onRegisterSubmit = async (values: RegisterFormValues) => {
     setIsLoading(true);
-    await signUp(values.email, values.password, values.fullName);
-    setIsLoading(false);
-    // Reset the form after submission
-    registerForm.reset();
+    
+    try {
+      const { error } = await signUp(values.email, values.password, values.name);
+      
+      if (error) {
+        toast.error(`Registration failed: ${error.message}`);
+      } else {
+        toast.success("Registration successful! Please check your email for verification.");
+        registerForm.reset();
+        document.getElementById('login-tab')?.click();
+      }
+    } catch (error: any) {
+      toast.error(`Registration error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <main className="bg-accent/20">
+    <main className="bg-accent/20 pt-20 pb-16">
       <PageHeader
         title="Authentication Portal"
-        description="Register or log in to access your spiritual journey with ASKSMS."
+        description="Register or log in to access your personalized dashboard."
       />
 
       <section className="py-16">
@@ -148,6 +174,9 @@ const Auth = () => {
                           </FormItem>
                         )}
                       />
+                      <div className="text-sm text-muted-foreground">
+                        <p>Admin login: admin@asksms.org / adminpassword</p>
+                      </div>
                       <Button 
                         type="submit" 
                         className="w-full bg-saffron hover:bg-saffron/90 mt-2" 
@@ -158,6 +187,9 @@ const Auth = () => {
                     </form>
                   </Form>
                 </CardContent>
+                <CardFooter className="flex flex-col items-center text-sm text-muted-foreground">
+                  <p>Forgot your password? <Link to="#" className="text-maroon hover:underline">Reset it here</Link></p>
+                </CardFooter>
               </Card>
             </TabsContent>
             
@@ -166,7 +198,7 @@ const Auth = () => {
                 <CardHeader>
                   <CardTitle className="text-maroon">Create an Account</CardTitle>
                   <CardDescription>
-                    Join our spiritual community as a devotee
+                    Join our spiritual community
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -174,7 +206,7 @@ const Auth = () => {
                     <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
                       <FormField
                         control={registerForm.control}
-                        name="fullName"
+                        name="name"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Full Name</FormLabel>
@@ -246,6 +278,9 @@ const Auth = () => {
                     </form>
                   </Form>
                 </CardContent>
+                <CardFooter className="flex flex-col items-center text-sm text-muted-foreground">
+                  <p>By registering, you agree to our <Link to="#" className="text-maroon hover:underline">Terms of Service</Link></p>
+                </CardFooter>
               </Card>
             </TabsContent>
           </Tabs>
