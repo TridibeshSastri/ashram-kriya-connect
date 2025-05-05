@@ -40,12 +40,13 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
     );
   }
 
-  // For admin paths, check both Supabase admin role and localStorage admin status
+  // For admin paths, check localStorage admin status
   if (requiredRoles?.includes('admin')) {
-    // If admin role is required and user is admin (either in Supabase or localStorage)
-    if (roles.includes('admin') || isAdmin) {
+    if (isAdmin) {
+      console.log("Admin authenticated, allowing access to protected route");
       return <>{children}</>;
     } else {
+      console.log("Admin authentication failed, redirecting to unauthorized");
       toast.error("You don't have permission to access this area");
       return <Navigate to="/unauthorized" replace />;
     }

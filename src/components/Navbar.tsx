@@ -7,9 +7,21 @@ import { useAuth } from '@/contexts/AuthContext';
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, isDevotee, isMentor, isAdmin, userData, signOut } = useAuth();
+  const { isAuthenticated, isDevotee, isMentor, userData, signOut } = useAuth();
+  
+  // Check for admin status from localStorage
+  useEffect(() => {
+    try {
+      const adminUser = localStorage.getItem('adminUser');
+      const isAdminUser = adminUser ? JSON.parse(adminUser).isAdmin : false;
+      setIsAdmin(isAdminUser);
+    } catch (error) {
+      setIsAdmin(false);
+    }
+  }, [location.pathname]); // Re-check on route change
   
   useEffect(() => {
     const handleScroll = () => {
@@ -44,13 +56,13 @@ const Navbar = () => {
   };
 
   // Role-specific links
-  const dashboardLink = isAuthenticated ? [
+  const dashboardLink = (isAuthenticated || isAdmin) ? [
     { name: 'My Dashboard', path: getDashboardPath() }
   ] : [];
 
   // Authentication link
-  const authLink = isAuthenticated 
-    ? { name: userData?.fullName || 'Account', path: getDashboardPath() }
+  const authLink = isAuthenticated || isAdmin
+    ? { name: isAdmin ? 'Admin' : (userData?.fullName || 'Account'), path: getDashboardPath() }
     : { name: 'Login / Register', path: '/auth' };
 
   const isActive = (path: string) => {
@@ -62,7 +74,14 @@ const Navbar = () => {
 
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
-    signOut();
+    if (isAdmin) {
+      localStorage.removeItem('adminUser');
+      setIsAdmin(false);
+      navigate('/');
+      window.location.reload();
+    } else {
+      signOut();
+    }
   };
 
   return (
@@ -99,10 +118,10 @@ const Navbar = () => {
             </Link>
           ))}
 
-          {isAuthenticated ? (
+          {isAuthenticated || isAdmin ? (
             <div className="flex items-center gap-2">
               <div className="text-sm lg:text-base px-3 py-2">
-                Hello, {userData?.fullName?.split(' ')[0] || 'User'}
+                Hello, {isAdmin ? 'Admin' : (userData?.fullName?.split(' ')[0] || 'User')}
               </div>
               <button
                 onClick={handleLogout}
@@ -159,10 +178,10 @@ const Navbar = () => {
               </Link>
             ))}
             
-            {isAuthenticated ? (
+            {isAuthenticated || isAdmin ? (
               <>
                 <div className="px-4 py-2 font-medium">
-                  Hello, {userData?.fullName?.split(' ')[0] || 'User'}
+                  Hello, {isAdmin ? 'Admin' : (userData?.fullName?.split(' ')[0] || 'User')}
                 </div>
                 <button
                   onClick={handleLogout}

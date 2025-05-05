@@ -51,6 +51,8 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
     try {
       // Special case for admin login
       if (values.email === 'admin@asksms.org' && values.password === 'adminpassword') {
+        console.log("Admin login successful, redirecting to admin dashboard");
+        
         // Store admin info in localStorage
         localStorage.setItem('adminUser', JSON.stringify({ 
           email: values.email,
@@ -58,7 +60,13 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
         }));
         
         toast.success("Admin Login Successful");
-        navigate('/admin-dashboard');
+        
+        // Force page reload to ensure auth state is recognized
+        setTimeout(() => {
+          navigate('/admin-dashboard');
+          window.location.reload();
+        }, 100);
+        
         return;
       }
       
@@ -69,6 +77,7 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
         toast.error(`Login failed: ${error.message}`);
       } else if (onSuccess) {
         onSuccess();
+        navigate('/devotee-dashboard');
       }
     } catch (error: any) {
       toast.error(`Authentication error: ${error.message}`);
