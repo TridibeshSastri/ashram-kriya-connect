@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
@@ -39,10 +38,6 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const { userData, signOut, isAdmin } = useAuth();
   
-  if (!userData || !isAdmin) {
-    return null; // Should be caught by ProtectedRoute
-  }
-  
   return (
     <main>
       <PageHeader 
@@ -54,7 +49,9 @@ const AdminDashboard = () => {
         <div className="container-custom">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-              <p className="text-muted-foreground">{userData.email}</p>
+              <p className="text-muted-foreground">
+                {userData?.email || 'admin@asksms.org'}
+              </p>
               <p className="font-medium text-maroon">Administrator</p>
             </div>
             <Button variant="outline" onClick={() => signOut()}>Log Out</Button>

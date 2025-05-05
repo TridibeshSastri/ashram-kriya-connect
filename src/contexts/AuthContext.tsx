@@ -40,6 +40,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [roles, setRoles] = useState<UserRole[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
+  // Check for admin status from localStorage
+  useEffect(() => {
+    try {
+      const adminUser = localStorage.getItem('adminUser');
+      const isAdminUser = adminUser ? JSON.parse(adminUser).isAdmin : false;
+      setIsAdmin(isAdminUser);
+    } catch (error) {
+      setIsAdmin(false);
+    }
+  }, []);
 
   // Helper function to fetch user data and roles
   const fetchUserData = async (userId: string) => {
@@ -94,7 +106,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Get dashboard path based on user role
   const getDashboardPath = () => {
-    if (roles.includes('admin')) return '/admin-dashboard';
+    if (isAdmin) return '/admin-dashboard';
     if (roles.includes('mentor')) return '/mentor-dashboard';
     if (roles.includes('devotee')) return '/devotee-dashboard';
     return '/auth';
@@ -176,6 +188,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
+      // Clear admin status if exists
+      if (isAdmin) {
+        localStorage.removeItem('adminUser');
+        setIsAdmin(false);
+      }
+      
       await supabase.auth.signOut();
       toast.success("Logged out successfully");
     } catch (error: any) {
@@ -189,11 +207,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     user,
     userData,
     roles,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user || isAdmin,
     isLoading,
     isDevotee: roles.includes('devotee'),
     isMentor: roles.includes('mentor'),
-    isAdmin: roles.includes('admin'),
+    isAdmin,
     signIn,
     signUp,
     signOut,
