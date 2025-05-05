@@ -72,14 +72,14 @@ const Auth = () => {
     try {
       // Special case for admin login
       if (values.email === 'admin@asksms.org' && values.password === 'adminpassword') {
-        // Store admin info in localStorage for legacy compatibility
+        // Store admin info in localStorage
         localStorage.setItem('adminUser', JSON.stringify({ 
           email: values.email,
           isAdmin: true 
         }));
         
         toast.success("Admin Login Successful");
-        navigate('/admin');
+        navigate('/admin-dashboard');
         return;
       }
       

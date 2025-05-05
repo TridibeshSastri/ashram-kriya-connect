@@ -1,7 +1,8 @@
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -10,9 +11,28 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading, roles } = useAuth();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [adminCheckComplete, setAdminCheckComplete] = useState(false);
+
+  // Check for admin in localStorage (for admin login)
+  useEffect(() => {
+    const checkAdminStatus = () => {
+      try {
+        const adminUser = localStorage.getItem('adminUser');
+        const isAdminUser = adminUser ? JSON.parse(adminUser).isAdmin : false;
+        setIsAdmin(isAdminUser);
+      } catch (error) {
+        setIsAdmin(false);
+      } finally {
+        setAdminCheckComplete(true);
+      }
+    };
+    
+    checkAdminStatus();
+  }, []);
 
   // If still loading authentication state, show loading indicator
-  if (isLoading) {
+  if (isLoading || !adminCheckComplete) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-saffron"></div>
@@ -20,8 +40,20 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
     );
   }
 
-  // If not authenticated, redirect to login
+  // For admin paths, check both Supabase admin role and localStorage admin status
+  if (requiredRoles?.includes('admin')) {
+    // If admin role is required and user is admin (either in Supabase or localStorage)
+    if (roles.includes('admin') || isAdmin) {
+      return <>{children}</>;
+    } else {
+      toast.error("You don't have permission to access this area");
+      return <Navigate to="/unauthorized" replace />;
+    }
+  }
+
+  // For non-admin paths, check regular authentication
   if (!isAuthenticated) {
+    toast.error("Please log in to access this page");
     return <Navigate to="/auth" replace />;
   }
 
@@ -30,6 +62,7 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
     const hasRequiredRole = roles.some(role => requiredRoles.includes(role));
     
     if (!hasRequiredRole) {
+      toast.error("You don't have permission to access this area");
       return <Navigate to="/unauthorized" replace />;
     }
   }
