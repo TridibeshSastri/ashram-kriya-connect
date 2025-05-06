@@ -44,11 +44,11 @@ const Admin = () => {
             <div className="flex justify-between items-center mb-8 overflow-x-auto">
               <TabsList className="grid w-full grid-cols-7 lg:w-[1000px]">
                 <TabsTrigger value="roles">User Roles</TabsTrigger>
-                <TabsTrigger value="events">Events</TabsTrigger>
                 <TabsTrigger value="users">User Bookings</TabsTrigger>
+                <TabsTrigger value="events">Events</TabsTrigger>
                 <TabsTrigger value="resources">Resources</TabsTrigger>
-                <TabsTrigger value="courses">Courses</TabsTrigger>
                 <TabsTrigger value="devotees">Devotees</TabsTrigger>
+                <TabsTrigger value="courses">Courses</TabsTrigger>
                 <TabsTrigger value="donations">Donations</TabsTrigger>
               </TabsList>
               
@@ -67,24 +67,24 @@ const Admin = () => {
               <AdminUserRolesManager />
             </TabsContent>
             
-            <TabsContent value="events" className="pt-4">
-              <AdminEventManager />
-            </TabsContent>
-            
             <TabsContent value="users" className="pt-4">
               <AdminUserManager />
+            </TabsContent>
+            
+            <TabsContent value="events" className="pt-4">
+              <AdminEventManager />
             </TabsContent>
             
             <TabsContent value="resources" className="pt-4">
               <AdminResourceManager />
             </TabsContent>
 
-            <TabsContent value="courses" className="pt-4">
-              <AdminCourseManager />
-            </TabsContent>
-            
             <TabsContent value="devotees" className="pt-4">
               <AdminDevoteeManager />
+            </TabsContent>
+            
+            <TabsContent value="courses" className="pt-4">
+              <AdminCourseManager />
             </TabsContent>
             
             <TabsContent value="donations" className="pt-4">
