@@ -50,7 +50,7 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
     
     try {
       // Special case for admin login
-      if (values.email === 'admin@asksms.org' && values.password === 'adminpassword') {
+      if (values.email === 'tridibesh.dspt@gmail.com' && values.password === 'Gopal@123') {
         console.log("Admin login successful, redirecting to admin dashboard");
         
         // Store admin info in localStorage
@@ -122,7 +122,7 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
           )}
         />
         <div className="text-sm text-muted-foreground">
-          <p>Admin login: admin@asksms.org / adminpassword</p>
+          <p>Admin login: tridibesh.dspt@gmail.com / Gopal@123</p>
         </div>
         <Button 
           type="submit" 

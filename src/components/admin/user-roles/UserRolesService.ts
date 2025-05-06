@@ -104,10 +104,10 @@ export const toggleUserRole = async (userId: string, role: UserRole, hasRole: bo
 
 export const createAdminUserAccount = async (): Promise<boolean> => {
   try {
-    // Register the admin user
+    // Register the admin user with the real email and password
     const { data, error } = await supabase.auth.signUp({
-      email: 'admin@asksms.org',
-      password: 'adminpassword'
+      email: 'tridibesh.dspt@gmail.com',
+      password: 'Gopal@123'
     });
     
     if (error) throw error;
@@ -118,7 +118,7 @@ export const createAdminUserAccount = async (): Promise<boolean> => {
         .from('profiles')
         .upsert({
           id: data.user.id,
-          email: 'admin@asksms.org',
+          email: 'tridibesh.dspt@gmail.com',
           full_name: 'Admin User',
         });
         
@@ -143,7 +143,7 @@ export const createAdminUserAccount = async (): Promise<boolean> => {
     
     // Special handling for "User already registered" error
     if (error.message?.includes('already registered')) {
-      toast.info('Admin user already exists. Try to sign in with admin@asksms.org/adminpassword');
+      toast.info('Admin user already exists. Try to sign in with tridibesh.dspt@gmail.com/Gopal@123');
     } else {
       toast.error('Failed to create admin user: ' + error.message);
     }

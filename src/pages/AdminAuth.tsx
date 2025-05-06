@@ -50,7 +50,7 @@ const AdminAuth = () => {
   const form = useForm<AdminLoginFormValues>({
     resolver: zodResolver(adminLoginSchema),
     defaultValues: {
-      email: "",
+      email: "tridibesh.dspt@gmail.com",
       password: "",
     },
   });
@@ -62,7 +62,7 @@ const AdminAuth = () => {
     
     // For demo purposes, let's hardcode admin credentials
     // In a real application, this would be validated against a database
-    const isValidAdmin = values.email === "admin@asksms.org" && values.password === "adminpassword";
+    const isValidAdmin = values.email === "tridibesh.dspt@gmail.com" && values.password === "Gopal@123";
     
     setTimeout(() => {
       setIsLoading(false);
@@ -123,7 +123,7 @@ const AdminAuth = () => {
                         <FormControl>
                           <div className="relative">
                             <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                            <Input placeholder="admin@asksms.org" className="pl-10" {...field} />
+                            <Input placeholder="tridibesh.dspt@gmail.com" className="pl-10" {...field} />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -158,7 +158,7 @@ const AdminAuth = () => {
             </CardContent>
             <CardFooter className="flex justify-center">
               <p className="text-sm text-muted-foreground">
-                For demo: admin@asksms.org / adminpassword
+                For demo: tridibesh.dspt@gmail.com / Gopal@123
               </p>
             </CardFooter>
           </Card>
