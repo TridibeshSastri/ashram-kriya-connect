@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search } from 'lucide-react';
+import { Search, RefreshCw } from 'lucide-react';
 
 type UserWithRoles = {
   id: string;
@@ -42,20 +42,31 @@ const AdminUserRolesManager = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      console.log("Fetching users...");
       
       // Get all user profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, email, full_name, created_at');
       
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        throw profilesError;
+      }
+      
+      console.log("Profiles fetched:", profiles);
       
       // Get all user roles
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role');
       
-      if (rolesError) throw rolesError;
+      if (rolesError) {
+        console.error("Error fetching user roles:", rolesError);
+        throw rolesError;
+      }
+      
+      console.log("User roles fetched:", userRoles);
       
       // Combine the data
       const usersWithRoles: UserWithRoles[] = profiles.map(profile => {
@@ -72,10 +83,11 @@ const AdminUserRolesManager = () => {
         };
       });
       
+      console.log("Users with roles:", usersWithRoles);
       setUsers(usersWithRoles);
     } catch (error: any) {
       console.error('Error fetching users:', error);
-      toast.error('Failed to load users');
+      toast.error('Failed to load users: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -85,23 +97,22 @@ const AdminUserRolesManager = () => {
     try {
       if (hasRole) {
         // Remove role
-        const { error } = await supabase.functions.invoke('remove_role', {
-          body: {
-            target_user_id: userId,
-            role_to_remove: role
-          }
-        });
+        const { error } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', userId)
+          .eq('role', role);
         
         if (error) throw error;
         toast.success(`Removed ${role} role`);
       } else {
         // Add role
-        const { error } = await supabase.functions.invoke('assign_role', {
-          body: {
-            target_user_id: userId,
-            role_to_assign: role
-          }
-        });
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: userId,
+            role: role
+          });
         
         if (error) throw error;
         toast.success(`Assigned ${role} role`);
@@ -137,23 +148,41 @@ const AdminUserRolesManager = () => {
   return (
     <Card>
       <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
           <h2 className="text-2xl font-bold text-maroon">User Role Management</h2>
           
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input 
-              className="pl-9" 
-              placeholder="Search users..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="relative w-full md:w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+              <Input 
+                className="pl-9" 
+                placeholder="Search users..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={fetchUsers} 
+              className="flex items-center gap-1"
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
           </div>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-saffron"></div>
+          </div>
+        ) : users.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No users found. Make sure your Supabase database has profiles created.</p>
+            <Button onClick={fetchUsers} className="mt-4">
+              Try Again
+            </Button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -166,55 +195,64 @@ const AdminUserRolesManager = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{user.fullName}</div>
-                        <div className="text-sm text-muted-foreground">{user.email}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-2">
-                        {user.roles.length > 0 ? (
-                          user.roles.map((role) => (
-                            <Badge 
-                              key={role} 
-                              className={
-                                role === 'admin' ? 'bg-red-100 text-red-800 hover:bg-red-100' :
-                                role === 'mentor' ? 'bg-blue-100 text-blue-800 hover:bg-blue-100' :
-                                'bg-green-100 text-green-800 hover:bg-green-100'
-                              }
-                            >
-                              {role}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-muted-foreground text-sm">No roles assigned</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-2">
-                        {['devotee', 'mentor', 'admin'].map((role) => {
-                          const hasRole = user.roles.includes(role as UserRole);
-                          return (
-                            <Button 
-                              key={role}
-                              size="sm"
-                              variant={hasRole ? "default" : "outline"}
-                              className={hasRole ? "bg-saffron hover:bg-saffron/90" : ""}
-                              onClick={() => toggleRole(user.id, role as UserRole, hasRole)}
-                            >
-                              {role}
-                              {hasRole ? " ✓" : ""}
-                            </Button>
-                          );
-                        })}
-                      </div>
+                {filteredUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center py-4">
+                      No users found matching your search
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{user.fullName || 'No name'}</div>
+                          <div className="text-sm text-muted-foreground">{user.email}</div>
+                          <div className="text-xs text-muted-foreground mt-1">ID: {user.id.substring(0, 8)}...</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-2">
+                          {user.roles.length > 0 ? (
+                            user.roles.map((role) => (
+                              <Badge 
+                                key={role} 
+                                className={
+                                  role === 'admin' ? 'bg-red-100 text-red-800 hover:bg-red-100' :
+                                  role === 'mentor' ? 'bg-blue-100 text-blue-800 hover:bg-blue-100' :
+                                  'bg-green-100 text-green-800 hover:bg-green-100'
+                                }
+                              >
+                                {role}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-muted-foreground text-sm">No roles assigned</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-2">
+                          {['devotee', 'mentor', 'admin'].map((role) => {
+                            const hasRole = user.roles.includes(role as UserRole);
+                            return (
+                              <Button 
+                                key={role}
+                                size="sm"
+                                variant={hasRole ? "default" : "outline"}
+                                className={hasRole ? "bg-saffron hover:bg-saffron/90" : ""}
+                                onClick={() => toggleRole(user.id, role as UserRole, hasRole)}
+                              >
+                                {role}
+                                {hasRole ? " ✓" : ""}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
