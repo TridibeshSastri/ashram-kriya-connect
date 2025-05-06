@@ -45,71 +45,27 @@ const AdminUserRolesManager = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log("Fetching users from auth.users...");
+      console.log("Fetching users from profiles table...");
       
-      // First try to get users from auth.users using admin access
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      // Fetch profiles data
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email, full_name, created_at');
       
-      if (authError) {
-        console.error("Error fetching auth users:", authError);
-        throw authError;
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        throw profilesError;
       }
       
-      console.log("Auth users fetched:", authUsers?.users?.length || 0, "users");
+      console.log("Profiles fetched:", profiles?.length || 0, "profiles found");
       
-      if (!authUsers?.users?.length) {
-        console.log("No auth users found, trying to get profiles directly...");
-        // Fallback to profiles table if no auth users are found
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, email, full_name, created_at');
-        
-        if (profilesError) {
-          console.error("Error fetching profiles:", profilesError);
-          throw profilesError;
-        }
-        
-        console.log("Profiles fetched:", profiles?.length || 0, "profiles found");
-        
-        if (!profiles?.length) {
-          setError("No users found in the database. Users need to register first.");
-          setUsers([]);
-          return;
-        }
-        
-        // Get all user roles
-        const { data: userRoles, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('user_id, role');
-        
-        if (rolesError) {
-          console.error("Error fetching user roles:", rolesError);
-          throw rolesError;
-        }
-        
-        console.log("User roles fetched:", userRoles?.length || 0, "roles found");
-        
-        // Combine the data for profiles
-        const usersWithRoles: UserWithRoles[] = profiles.map(profile => {
-          const userRolesList = userRoles
-            ?.filter(r => r.user_id === profile.id)
-            ?.map(r => r.role as UserRole) || [];
-          
-          return {
-            id: profile.id,
-            email: profile.email || '',
-            fullName: profile.full_name || '',
-            roles: userRolesList,
-            created_at: profile.created_at
-          };
-        });
-        
-        console.log("Users with roles:", usersWithRoles);
-        setUsers(usersWithRoles);
+      if (!profiles?.length) {
+        setError("No users found in the database. Users need to register first.");
+        setUsers([]);
         return;
       }
       
-      // If auth users were found, get all user roles
+      // Get all user roles
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role');
@@ -121,45 +77,22 @@ const AdminUserRolesManager = () => {
       
       console.log("User roles fetched:", userRoles?.length || 0, "roles found");
       
-      // For auth users, also try to get profiles for additional info
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, email, full_name');
-      
-      if (profilesError) {
-        console.error("Error fetching profiles:", profilesError);
-        // Don't throw here, just log it - we can still use the auth users data
-      }
-      
-      console.log("Profiles fetched for enrichment:", profiles?.length || 0, "profiles found");
-      
-      // Create a lookup for faster profile access
-      const profileLookup = new Map();
-      if (profiles && profiles.length > 0) {
-        profiles.forEach(profile => {
-          profileLookup.set(profile.id, profile);
-        });
-      }
-      
-      // Combine the auth users with roles
-      const usersWithRoles: UserWithRoles[] = authUsers.users.map(user => {
+      // Combine the data for profiles
+      const usersWithRoles: UserWithRoles[] = profiles.map(profile => {
         const userRolesList = userRoles
-          ?.filter(r => r.user_id === user.id)
+          ?.filter(r => r.user_id === profile.id)
           ?.map(r => r.role as UserRole) || [];
         
-        // Try to get additional info from profile
-        const profile = profileLookup.get(user.id);
-        
         return {
-          id: user.id,
-          email: user.email || '',
-          fullName: profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || '',
+          id: profile.id,
+          email: profile.email || '',
+          fullName: profile.full_name || '',
           roles: userRolesList,
-          created_at: user.created_at
+          created_at: profile.created_at
         };
       });
       
-      console.log("Users with roles (from auth):", usersWithRoles);
+      console.log("Users with roles:", usersWithRoles);
       setUsers(usersWithRoles);
     } catch (error: any) {
       console.error('Error fetching users:', error);
