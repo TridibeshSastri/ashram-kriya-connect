@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, RefreshCw, AlertCircle, UserCheck } from 'lucide-react';
+import { Search, RefreshCw, AlertCircle, UserCheck, UserPlus } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type UserWithRoles = {
@@ -33,7 +33,8 @@ const AdminUserRolesManager = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const { isAdmin } = useAuth();
+  const { isAdmin, refreshUserData } = useAuth();
+  const [creatingAdmin, setCreatingAdmin] = useState(false);
 
   useEffect(() => {
     if (isAdmin) {
@@ -60,7 +61,7 @@ const AdminUserRolesManager = () => {
       console.log("Profiles fetched:", profiles?.length || 0, "profiles found");
       
       if (!profiles?.length) {
-        setError("No users found in the database. Users need to register first.");
+        setError("No users found in the database. Users need to register first or add an admin user.");
         setUsers([]);
         return;
       }
@@ -146,6 +147,62 @@ const AdminUserRolesManager = () => {
     }
   };
   
+  const createAdminUser = async () => {
+    try {
+      setCreatingAdmin(true);
+      
+      // Register the admin user
+      const { data, error } = await supabase.auth.signUp({
+        email: 'admin@asksms.org',
+        password: 'adminpassword'
+      });
+      
+      if (error) throw error;
+      
+      if (data.user) {
+        // Manually insert into profiles if needed
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: data.user.id,
+            email: 'admin@asksms.org',
+            full_name: 'Admin User',
+          });
+          
+        if (profileError) throw profileError;
+        
+        // Assign admin role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: data.user.id,
+            role: 'admin'
+          });
+          
+        if (roleError) throw roleError;
+        
+        toast.success('Admin user created successfully');
+        
+        // Refresh user list
+        await fetchUsers();
+        
+        // Refresh current user data in case this is the admin
+        await refreshUserData();
+      }
+    } catch (error: any) {
+      console.error('Error creating admin user:', error);
+      
+      // Special handling for "User already registered" error
+      if (error.message?.includes('already registered')) {
+        toast.info('Admin user already exists. Try to sign in with admin@asksms.org/adminpassword');
+      } else {
+        toast.error('Failed to create admin user: ' + error.message);
+      }
+    } finally {
+      setCreatingAdmin(false);
+    }
+  };
+  
   const filteredUsers = users.filter(user => 
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
     user.fullName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -161,7 +218,7 @@ const AdminUserRolesManager = () => {
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
           <h2 className="text-2xl font-bold text-maroon">User Role Management</h2>
           
-          <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
             <div className="relative w-full md:w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
               <Input 
@@ -179,6 +236,14 @@ const AdminUserRolesManager = () => {
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
+            </Button>
+            <Button
+              onClick={createAdminUser}
+              className="flex items-center gap-1 bg-saffron hover:bg-saffron/90"
+              disabled={creatingAdmin}
+            >
+              <UserPlus className="h-4 w-4" />
+              {creatingAdmin ? 'Creating...' : 'Create Admin'}
             </Button>
           </div>
         </div>
@@ -201,7 +266,8 @@ const AdminUserRolesManager = () => {
               <UserCheck className="h-4 w-4" />
               <AlertTitle>No users found</AlertTitle>
               <AlertDescription>
-                No registered users were found in your database. Users need to register using the authentication system first.
+                No registered users were found in your database. Users need to register using the authentication system first, 
+                or you can create an admin user with the "Create Admin" button above.
               </AlertDescription>
             </Alert>
             <Button onClick={fetchUsers} className="mt-4">
